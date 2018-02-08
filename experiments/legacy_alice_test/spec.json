@@ -1,0 +1,31 @@
+{
+  "data_folder" : "alice",
+  "model"       : "rnn",
+  "batches_between_stats": 20,
+  "alphabet_file": "",
+  "hyperparams" : {
+    "1": {
+      "network_type"      : ["lstm"],
+      "hidden_size"       : [0, 128],
+      "num_layers"        : [1],
+      "batch_size"        : [5, 10],
+      "num_timesteps"     : [128],
+      "reset_state_every" : [1024],
+      "optimizer"         : [
+          {
+            "name": "SGD",
+            "kwargs":
+            {
+
+            }
+          }
+        ],
+      "learning_rate"     : [0.1, 1, 10],
+      "num_epochs"        : [60],
+      "l2_penalty"        : [0],
+      "recurrent_dropout" : [0],
+      "linear_dropout"    : [0]
+
+    }
+ }
+}

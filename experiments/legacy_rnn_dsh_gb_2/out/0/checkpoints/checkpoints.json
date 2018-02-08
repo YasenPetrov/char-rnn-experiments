@@ -1,0 +1,48 @@
+{
+  "best": {
+    "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/best.sd",
+    "valid_loss": 2.1247525413831077
+  },
+  "checkpoints": {
+    "1": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.1.sd",
+      "valid_loss": 2.972208877404531
+    },
+    "2": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.2.sd",
+      "valid_loss": 2.610897978146871
+    },
+    "3": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.3.sd",
+      "valid_loss": 2.525593558947245
+    },
+    "4": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.4.sd",
+      "valid_loss": 2.4257118900616965
+    },
+    "5": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.5.sd",
+      "valid_loss": 2.3467177947362265
+    },
+    "6": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.6.sd",
+      "valid_loss": 2.2681652903556824
+    },
+    "7": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.7.sd",
+      "valid_loss": 2.2167492310206094
+    },
+    "8": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.8.sd",
+      "valid_loss": 2.1865854064623513
+    },
+    "9": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.9.sd",
+      "valid_loss": 2.1472428838411965
+    },
+    "10": {
+      "filename": "./experiments/rnn_dsh_gb_2/out/0/checkpoints/epoch.10.sd",
+      "valid_loss": 2.119416832923889
+    }
+  }
+}

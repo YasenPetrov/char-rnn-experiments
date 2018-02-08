@@ -1,0 +1,290 @@
+{
+  "0": {
+    "path": "./experiments/alice_test/out/0/checkpoints/best.sd",
+    "valid_loss": 2.1236272616819902,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 0.1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "1": {
+    "path": "./experiments/alice_test/out/1/checkpoints/best.sd",
+    "valid_loss": 1.5925605622204868,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "2": {
+    "path": "./experiments/alice_test/out/2/checkpoints/best.sd",
+    "valid_loss": 1.5983003919774836,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 10,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "3": {
+    "path": "./experiments/alice_test/out/3/checkpoints/best.sd",
+    "valid_loss": 2.3251410007476805,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 0.1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "4": {
+    "path": "./experiments/alice_test/out/4/checkpoints/best.sd",
+    "valid_loss": 1.6497319698333741,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "5": {
+    "path": "./experiments/alice_test/out/5/checkpoints/best.sd",
+    "valid_loss": 1.638903522491455,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 10,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 74,
+      "network_type": "lstm"
+    }
+  },
+  "6": {
+    "path": "./experiments/alice_test/out/6/checkpoints/best.sd",
+    "valid_loss": 1.9906025799837979,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 0.1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  },
+  "7": {
+    "path": "./experiments/alice_test/out/7/checkpoints/best.sd",
+    "valid_loss": 1.5988937616348267,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  },
+  "8": {
+    "path": "./experiments/alice_test/out/8/checkpoints/best.sd",
+    "valid_loss": 1.4983056350187822,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 10,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 5,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  },
+  "9": {
+    "path": "./experiments/alice_test/out/9/checkpoints/best.sd",
+    "valid_loss": 2.337750244140625,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 0.1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  },
+  "10": {
+    "path": "./experiments/alice_test/out/10/checkpoints/best.sd",
+    "valid_loss": 1.6107449293136598,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 1,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  },
+  "11": {
+    "path": "./experiments/alice_test/out/11/checkpoints/best.sd",
+    "valid_loss": 53.95610885620117,
+    "config": {
+      "linear_dropout": 0,
+      "recurrent_dropout": 0,
+      "l2_penalty": 0,
+      "num_epochs": 60,
+      "learning_rate": 10,
+      "optimizer": {
+        "name": "SGD",
+        "kwargs": {
+          "lr": 10,
+          "weight_decay": 0
+        }
+      },
+      "reset_state_every": 1024,
+      "num_timesteps": 128,
+      "batch_size": 10,
+      "num_layers": 1,
+      "hidden_size": 128,
+      "network_type": "lstm"
+    }
+  }
+}

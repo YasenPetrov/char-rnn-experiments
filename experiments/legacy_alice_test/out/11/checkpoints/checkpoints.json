@@ -1,0 +1,248 @@
+{
+  "best": {
+    "filename": "./experiments/alice_test/out/11/checkpoints/best.sd",
+    "valid_loss": 53.95610885620117
+  },
+  "checkpoints": {
+    "1": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.1.sd",
+      "valid_loss": 126.80816497802735
+    },
+    "2": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.2.sd",
+      "valid_loss": 186.10562133789062
+    },
+    "3": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.3.sd",
+      "valid_loss": 151.1371307373047
+    },
+    "4": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.4.sd",
+      "valid_loss": 109.85514221191406
+    },
+    "5": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.5.sd",
+      "valid_loss": 143.88408508300782
+    },
+    "6": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.6.sd",
+      "valid_loss": 103.65486907958984
+    },
+    "7": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.7.sd",
+      "valid_loss": 128.9761001586914
+    },
+    "8": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.8.sd",
+      "valid_loss": 104.65068969726562
+    },
+    "9": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.9.sd",
+      "valid_loss": 154.76129150390625
+    },
+    "10": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.10.sd",
+      "valid_loss": 105.10742492675782
+    },
+    "11": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.11.sd",
+      "valid_loss": 89.2978500366211
+    },
+    "12": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.12.sd",
+      "valid_loss": 76.64748077392578
+    },
+    "13": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.13.sd",
+      "valid_loss": 118.77667388916015
+    },
+    "14": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.14.sd",
+      "valid_loss": 105.20408172607422
+    },
+    "15": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.15.sd",
+      "valid_loss": 105.80679016113281
+    },
+    "16": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.16.sd",
+      "valid_loss": 103.68196411132813
+    },
+    "17": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.17.sd",
+      "valid_loss": 95.3382583618164
+    },
+    "18": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.18.sd",
+      "valid_loss": 106.60139465332031
+    },
+    "19": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.19.sd",
+      "valid_loss": 119.01197814941406
+    },
+    "20": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.20.sd",
+      "valid_loss": 100.20162963867188
+    },
+    "21": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.21.sd",
+      "valid_loss": 83.60687103271485
+    },
+    "22": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.22.sd",
+      "valid_loss": 91.17939758300781
+    },
+    "23": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.23.sd",
+      "valid_loss": 70.19636383056641
+    },
+    "24": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.24.sd",
+      "valid_loss": 95.11755981445313
+    },
+    "25": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.25.sd",
+      "valid_loss": 63.453345489501956
+    },
+    "26": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.26.sd",
+      "valid_loss": 100.49842987060546
+    },
+    "27": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.27.sd",
+      "valid_loss": 121.49472503662109
+    },
+    "28": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.28.sd",
+      "valid_loss": 121.14662017822266
+    },
+    "29": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.29.sd",
+      "valid_loss": 107.78572387695313
+    },
+    "30": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.30.sd",
+      "valid_loss": 64.21045379638672
+    },
+    "31": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.31.sd",
+      "valid_loss": 66.66745300292969
+    },
+    "32": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.32.sd",
+      "valid_loss": 112.52275085449219
+    },
+    "33": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.33.sd",
+      "valid_loss": 106.0584701538086
+    },
+    "34": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.34.sd",
+      "valid_loss": 93.58041687011719
+    },
+    "35": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.35.sd",
+      "valid_loss": 92.77360687255859
+    },
+    "36": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.36.sd",
+      "valid_loss": 127.70689086914062
+    },
+    "37": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.37.sd",
+      "valid_loss": 114.25410614013671
+    },
+    "38": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.38.sd",
+      "valid_loss": 92.96030731201172
+    },
+    "39": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.39.sd",
+      "valid_loss": 63.32200546264649
+    },
+    "40": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.40.sd",
+      "valid_loss": 73.47100372314453
+    },
+    "41": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.41.sd",
+      "valid_loss": 85.39447479248047
+    },
+    "42": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.42.sd",
+      "valid_loss": 93.33225860595704
+    },
+    "43": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.43.sd",
+      "valid_loss": 72.00555267333985
+    },
+    "44": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.44.sd",
+      "valid_loss": 72.70314025878906
+    },
+    "45": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.45.sd",
+      "valid_loss": 53.95610885620117
+    },
+    "46": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.46.sd",
+      "valid_loss": 62.282066345214844
+    },
+    "47": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.47.sd",
+      "valid_loss": 84.31735229492188
+    },
+    "48": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.48.sd",
+      "valid_loss": 102.55818481445313
+    },
+    "49": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.49.sd",
+      "valid_loss": 99.51488342285157
+    },
+    "50": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.50.sd",
+      "valid_loss": 123.11978149414062
+    },
+    "51": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.51.sd",
+      "valid_loss": 100.21112060546875
+    },
+    "52": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.52.sd",
+      "valid_loss": 88.02003936767578
+    },
+    "53": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.53.sd",
+      "valid_loss": 91.71739959716797
+    },
+    "54": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.54.sd",
+      "valid_loss": 98.58780212402344
+    },
+    "55": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.55.sd",
+      "valid_loss": 90.37520751953124
+    },
+    "56": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.56.sd",
+      "valid_loss": 84.77811431884766
+    },
+    "57": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.57.sd",
+      "valid_loss": 71.15520629882812
+    },
+    "58": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.58.sd",
+      "valid_loss": 106.2428955078125
+    },
+    "59": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.59.sd",
+      "valid_loss": 102.47513275146484
+    },
+    "60": {
+      "filename": "./experiments/alice_test/out/11/checkpoints/epoch.60.sd",
+      "valid_loss": 70.29940185546874
+    }
+  }
+}

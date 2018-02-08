@@ -1,0 +1,48 @@
+{
+  "best": {
+    "filename": "./experiments/test_small/out/1/checkpoints/best.sd",
+    "valid_loss": 2.537719025331385
+  },
+  "checkpoints": {
+    "1": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.1.sd",
+      "valid_loss": 3.2430803775787354
+    },
+    "2": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.2.sd",
+      "valid_loss": 3.2247389835469864
+    },
+    "3": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.3.sd",
+      "valid_loss": 3.2023533372318043
+    },
+    "4": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.4.sd",
+      "valid_loss": 3.0713075539645027
+    },
+    "5": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.5.sd",
+      "valid_loss": 2.924386781804702
+    },
+    "6": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.6.sd",
+      "valid_loss": 2.879673782516928
+    },
+    "7": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.7.sd",
+      "valid_loss": 2.8348946851842545
+    },
+    "8": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.8.sd",
+      "valid_loss": 2.749476243467892
+    },
+    "9": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.9.sd",
+      "valid_loss": 2.667785749715917
+    },
+    "10": {
+      "filename": "./experiments/test_small/out/1/checkpoints/epoch.10.sd",
+      "valid_loss": 2.618025373010074
+    }
+  }
+}

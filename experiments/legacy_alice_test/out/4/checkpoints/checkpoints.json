@@ -1,0 +1,248 @@
+{
+  "best": {
+    "filename": "./experiments/alice_test/out/4/checkpoints/best.sd",
+    "valid_loss": 1.6497319698333741
+  },
+  "checkpoints": {
+    "1": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.1.sd",
+      "valid_loss": 3.184639501571655
+    },
+    "2": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.2.sd",
+      "valid_loss": 3.1135112762451174
+    },
+    "3": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.3.sd",
+      "valid_loss": 2.9252198219299315
+    },
+    "4": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.4.sd",
+      "valid_loss": 2.7544937133789062
+    },
+    "5": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.5.sd",
+      "valid_loss": 2.621432065963745
+    },
+    "6": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.6.sd",
+      "valid_loss": 2.519161891937256
+    },
+    "7": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.7.sd",
+      "valid_loss": 2.42356390953064
+    },
+    "8": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.8.sd",
+      "valid_loss": 2.337066125869751
+    },
+    "9": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.9.sd",
+      "valid_loss": 2.3082798957824706
+    },
+    "10": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.10.sd",
+      "valid_loss": 2.261605453491211
+    },
+    "11": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.11.sd",
+      "valid_loss": 2.187275838851929
+    },
+    "12": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.12.sd",
+      "valid_loss": 2.1468274116516115
+    },
+    "13": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.13.sd",
+      "valid_loss": 2.2044477462768555
+    },
+    "14": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.14.sd",
+      "valid_loss": 2.149241590499878
+    },
+    "15": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.15.sd",
+      "valid_loss": 2.1164392948150637
+    },
+    "16": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.16.sd",
+      "valid_loss": 2.0942592144012453
+    },
+    "17": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.17.sd",
+      "valid_loss": 2.0472788572311402
+    },
+    "18": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.18.sd",
+      "valid_loss": 2.0315556287765504
+    },
+    "19": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.19.sd",
+      "valid_loss": 2.02536301612854
+    },
+    "20": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.20.sd",
+      "valid_loss": 1.9975846767425538
+    },
+    "21": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.21.sd",
+      "valid_loss": 1.9754541158676147
+    },
+    "22": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.22.sd",
+      "valid_loss": 1.9577567815780639
+    },
+    "23": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.23.sd",
+      "valid_loss": 1.9339884996414185
+    },
+    "24": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.24.sd",
+      "valid_loss": 1.9121611356735229
+    },
+    "25": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.25.sd",
+      "valid_loss": 1.8952401161193848
+    },
+    "26": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.26.sd",
+      "valid_loss": 1.8786033630371093
+    },
+    "27": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.27.sd",
+      "valid_loss": 1.8627648830413819
+    },
+    "28": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.28.sd",
+      "valid_loss": 1.8409652709960938
+    },
+    "29": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.29.sd",
+      "valid_loss": 1.8296121597290038
+    },
+    "30": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.30.sd",
+      "valid_loss": 1.8188111543655396
+    },
+    "31": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.31.sd",
+      "valid_loss": 1.8099147081375122
+    },
+    "32": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.32.sd",
+      "valid_loss": 1.8020250082015992
+    },
+    "33": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.33.sd",
+      "valid_loss": 1.8047162294387817
+    },
+    "34": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.34.sd",
+      "valid_loss": 1.7971900701522827
+    },
+    "35": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.35.sd",
+      "valid_loss": 1.7855344533920288
+    },
+    "36": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.36.sd",
+      "valid_loss": 1.7746790170669555
+    },
+    "37": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.37.sd",
+      "valid_loss": 1.7642366886138916
+    },
+    "38": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.38.sd",
+      "valid_loss": 1.757741355895996
+    },
+    "39": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.39.sd",
+      "valid_loss": 1.7513134717941283
+    },
+    "40": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.40.sd",
+      "valid_loss": 1.7428930521011352
+    },
+    "41": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.41.sd",
+      "valid_loss": 1.7352640151977539
+    },
+    "42": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.42.sd",
+      "valid_loss": 1.728199553489685
+    },
+    "43": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.43.sd",
+      "valid_loss": 1.7227838277816772
+    },
+    "44": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.44.sd",
+      "valid_loss": 1.7173649311065673
+    },
+    "45": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.45.sd",
+      "valid_loss": 1.7145357847213745
+    },
+    "46": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.46.sd",
+      "valid_loss": 1.706657886505127
+    },
+    "47": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.47.sd",
+      "valid_loss": 1.7035860300064087
+    },
+    "48": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.48.sd",
+      "valid_loss": 1.705185055732727
+    },
+    "49": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.49.sd",
+      "valid_loss": 1.691810965538025
+    },
+    "50": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.50.sd",
+      "valid_loss": 1.6849385261535645
+    },
+    "51": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.51.sd",
+      "valid_loss": 1.6889718294143676
+    },
+    "52": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.52.sd",
+      "valid_loss": 1.6779027462005616
+    },
+    "53": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.53.sd",
+      "valid_loss": 1.6739140033721924
+    },
+    "54": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.54.sd",
+      "valid_loss": 1.676018524169922
+    },
+    "55": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.55.sd",
+      "valid_loss": 1.6660085916519165
+    },
+    "56": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.56.sd",
+      "valid_loss": 1.6655188083648682
+    },
+    "57": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.57.sd",
+      "valid_loss": 1.6612725973129272
+    },
+    "58": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.58.sd",
+      "valid_loss": 1.6560116291046143
+    },
+    "59": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.59.sd",
+      "valid_loss": 1.6563092708587646
+    },
+    "60": {
+      "filename": "./experiments/alice_test/out/4/checkpoints/epoch.60.sd",
+      "valid_loss": 1.6497319698333741
+    }
+  }
+}

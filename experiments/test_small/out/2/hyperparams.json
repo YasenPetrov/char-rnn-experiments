@@ -1,0 +1,17 @@
+{
+  "linear_dropout": 0,
+  "recurrent_dropout": 0,
+  "l2_penalty": 0,
+  "num_epochs": 10,
+  "learning_rate": 0.1,
+  "optimizer": {
+    "name": "SGD",
+    "kwargs": {}
+  },
+  "reset_state_every": 120,
+  "num_timesteps": 10,
+  "batch_size": 4,
+  "num_layers": 1,
+  "hidden_size": 0,
+  "network_type": "lstm"
+}
