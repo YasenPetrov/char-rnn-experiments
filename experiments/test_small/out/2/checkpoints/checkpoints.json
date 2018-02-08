@@ -1,40 +1,40 @@
 {
   "best": {
     "filename": "./experiments/test_small/out/2/checkpoints/best.sd",
-    "valid_loss": 2.7591168308258056
+    "valid_loss": 2.7591168117523193
   },
   "checkpoints": {
     "1": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.1.sd",
-      "valid_loss": 3.2828292989730836
+      "valid_loss": 3.282829270362854
     },
     "2": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.2.sd",
-      "valid_loss": 3.232434687614441
+      "valid_loss": 3.2324347066879273
     },
     "3": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.3.sd",
-      "valid_loss": 3.2148704290390016
+      "valid_loss": 3.2148704385757445
     },
     "4": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.4.sd",
-      "valid_loss": 3.195896954536438
+      "valid_loss": 3.1958969497680663
     },
     "5": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.5.sd",
-      "valid_loss": 3.165278239250183
+      "valid_loss": 3.165278224945068
     },
     "6": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.6.sd",
-      "valid_loss": 3.1157635402679444
+      "valid_loss": 3.115763530731201
     },
     "7": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.7.sd",
-      "valid_loss": 3.046895508766174
+      "valid_loss": 3.0468954753875734
     },
     "8": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.8.sd",
-      "valid_loss": 2.934657669067383
+      "valid_loss": 2.9346576881408692
     },
     "9": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.9.sd",
@@ -42,7 +42,7 @@
     },
     "10": {
       "filename": "./experiments/test_small/out/2/checkpoints/epoch.10.sd",
-      "valid_loss": 2.7983706760406495
+      "valid_loss": 2.7983706903457644
     }
   }
 }

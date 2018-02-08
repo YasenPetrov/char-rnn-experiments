@@ -6,23 +6,23 @@
   "checkpoints": {
     "1": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.1.sd",
-      "valid_loss": 3.2430803775787354
+      "valid_loss": 3.243080398615669
     },
     "2": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.2.sd",
-      "valid_loss": 3.2247389835469864
+      "valid_loss": 3.2247389765346752
     },
     "3": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.3.sd",
-      "valid_loss": 3.2023533372318043
+      "valid_loss": 3.2023533442441154
     },
     "4": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.4.sd",
-      "valid_loss": 3.0713075539645027
+      "valid_loss": 3.0713075820137474
     },
     "5": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.5.sd",
-      "valid_loss": 2.924386781804702
+      "valid_loss": 2.9243867958293244
     },
     "6": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.6.sd",
@@ -30,19 +30,19 @@
     },
     "7": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.7.sd",
-      "valid_loss": 2.8348946851842545
+      "valid_loss": 2.8348947482950546
     },
     "8": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.8.sd",
-      "valid_loss": 2.749476243467892
+      "valid_loss": 2.7494762504802033
     },
     "9": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.9.sd",
-      "valid_loss": 2.667785749715917
+      "valid_loss": 2.6677857707528507
     },
     "10": {
       "filename": "./experiments/test_small/out/1/checkpoints/epoch.10.sd",
-      "valid_loss": 2.618025373010074
+      "valid_loss": 2.618025351973141
     }
   }
 }
