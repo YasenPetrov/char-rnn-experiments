@@ -6,6 +6,9 @@ import copy
 import time
 
 import pandas as pd
+import matplotlib
+# We do not need to show a figure - the line below makes sure we do not look for a display to show one
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from models.rnn import RNN_LM, get_rnn_for_hyperparams
