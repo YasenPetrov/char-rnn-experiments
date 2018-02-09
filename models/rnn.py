@@ -85,4 +85,5 @@ def get_rnn_for_hyperparams(hyperparams, alphabet_size, use_gpu):
                    hyperparams.num_layers, hyperparams.network_type, use_gpu,
                    hyperparams.recurrent_dropout,
                    hyperparams.linear_dropout)
+    model.rnn.flatten_parameters()
     return model
