@@ -10,11 +10,12 @@ import matplotlib
 # We do not need to show a figure - the line below makes sure we do not look for a display to show one
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from torch import nn
 
 from models.rnn import RNN_LM, get_rnn_for_hyperparams
 from models.ngram import Ngram_LM
 from models.utils import RNN_Hyperparameters, Ngram_Hyperparameters
-from training import train_rnn
+from training import train_rnn, evaluate_rnn
 from datautils.dataset import Alphabet, Dataset, TextFile
 from utils import dict_of_lists_to_list_of_dicts
 from trainutils.trainutils import TrainLog
@@ -24,7 +25,6 @@ from config import EXPERIMENT_DIR, EXPERIMENT_SPEC_FILENAME, DATA_DIR, ALPHABETS
 
 logger = get_logger(__name__)
 
-# TODO: Save optimizer state when making a checkpoint - see https://discuss.pytorch.org/t/saving-and-loading-a-model-in-pytorch/2610/3
 # TODO: Documentation
 # TODO: Avoid downspikes in validation loss in training
 # TODO: Unify interfaces of language models
@@ -32,20 +32,11 @@ logger = get_logger(__name__)
 
 # TRAIZQ
 # TODO: Experiment names should start with 00>asdas
-# TODO: Make hyperparam config names semanticly meaningful
+# TODO: Make hyperparam config names meaningful
 # TODO: Model serialization
 
 
-if __name__ == '__main__':
-    # TODO: Help messages
-    parser = argparse.ArgumentParser(description='''Runs a training or evaluation session''')
-
-    parser.add_argument('experiment_name', metavar='experiment_name', type=str, help='The name of the experiment')
-    parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
-                        help='If set, training is performet on a GPU, if available')
-
-    args = parser.parse_args()
-
+def train(args):
     logger.info('\n{0}\nStarting experiment {1}\n{2}'.format('=' * 30, args.experiment_name, '=' * 30))
     # We expect to find a spec.json file in a folder with the same name as the experiment under the main experiment dir
     experiment_folder = os.path.join(EXPERIMENT_DIR, args.experiment_name)
@@ -284,3 +275,15 @@ if __name__ == '__main__':
                     plt.ylabel('BPC', fontsize=14)
                     plt.savefig(os.path.join(out_folder_name, '{0}.png'.format(kv)))
                     plt.close()
+
+
+if __name__ == '__main__':
+    # TODO: Help messages
+    parser = argparse.ArgumentParser(description='''Runs a training or evaluation session''')
+
+    parser.add_argument('experiment_name', metavar='experiment_name', type=str, help='The name of the experiment')
+    parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
+                        help='If set, training is performet on a GPU, if available')
+
+    args = parser.parse_args()
+    train(args)
