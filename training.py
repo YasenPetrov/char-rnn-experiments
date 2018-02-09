@@ -157,7 +157,15 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict()
         }, checkpoint_filename)
-        torch.save(model.state_dict(), checkpoint_filename)
+
+        if best_model_validation_loss is None or best_model_validation_loss > checkpoint_validation_loss:
+            best_model_validation_loss = checkpoint_validation_loss
+            torch.save({
+                'epoch': epoch_number + 1,
+                'valid_loss': checkpoint_validation_loss,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict()
+            }, best_model_filename)
 
         # Dump training log - if something fails during the next epoch, at least we'll have kept what we have so far
         train_log.dump_to_json(train_log_file)
@@ -201,12 +209,13 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
 
         start = time.time()
 
+        # Make variables volatile - we will not backpropagate here
         if use_gpu:
-            inputs = Variable(torch.Tensor(inputs)).cuda()
-            targets = Variable(torch.LongTensor(targets)).cuda()
+            inputs = Variable(torch.Tensor(inputs), volatile=True).cuda()
+            targets = Variable(torch.LongTensor(targets), volatile=True).cuda()
         else:
-            inputs = Variable(torch.Tensor(inputs))
-            targets = Variable(torch.LongTensor(targets))
+            inputs = Variable(torch.Tensor(inputs), volatile=True)
+            targets = Variable(torch.LongTensor(targets), volatile=True)
 
         # Forward pass
         logits = model(inputs)
