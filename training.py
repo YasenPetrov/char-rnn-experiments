@@ -25,7 +25,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
     # Track the best model
     best_model_state_dict = None
     best_model_validation_loss = None
-    best_model_filename = os.path.join(model_checkpoints_dir, 'best.sd')
+    best_model_filename = os.path.join(model_checkpoints_dir, 'best.pth.tar')
 
     # Also, keep track of checkpoints nad performance - this is a map from filenames to bpc
     checkpoints = {
@@ -33,7 +33,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
             "filename": best_model_filename,
             "valid_loss": ""
         },
-        "checkpoints": {}
+        "last": {}
     }
     checkpoints_log_filename = os.path.join(model_checkpoints_dir, 'checkpoints.json')
 
@@ -136,22 +136,33 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                 # If we have a new best model, update bset loss store it
                 if best_model_validation_loss is None or best_model_validation_loss > validation_loss:
                     best_model_validation_loss = validation_loss
-                    torch.save(model.state_dict(), best_model_filename)
+                    torch.save({
+                        'epoch': epoch_number + 1,
+                        'valid_loss': validation_loss,
+                        'state_dict': model.state_dict(),
+                        'optimizer' : optimizer.state_dict()
+                    }, best_model_filename)
 
         # At the end of each epoch, save a checkpoint and stats
         checkpoint_validation_loss = evaluate_rnn(model, data_valid, loss_function,
                                              num_timesteps=batch_size * num_timesteps,
                                              use_gpu=use_gpu)
         # Remove last model checkpoint and make a new one
-        if os.path.exists(os.path.join(model_checkpoints_dir, 'epoch.{0}.sd'.format(epoch_number))):
-            os.remove(os.path.join(model_checkpoints_dir, 'epoch.{0}.sd'.format(epoch_number)))
-        checkpoint_filename = os.path.join(model_checkpoints_dir, 'epoch.{0}.sd'.format(epoch_number + 1))
+        if os.path.exists(os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number))):
+            os.remove(os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number)))
+        checkpoint_filename = os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number + 1))
+        torch.save({
+            'epoch': epoch_number + 1,
+            'valid_loss': checkpoint_validation_loss,
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict()
+        }, checkpoint_filename)
         torch.save(model.state_dict(), checkpoint_filename)
 
         # Dump training log - if something fails during the next epoch, at least we'll have kept what we have so far
         train_log.dump_to_json(train_log_file)
         cp_log = {'filename' : checkpoint_filename, 'valid_loss': checkpoint_validation_loss}
-        checkpoints['checkpoints'][epoch_number + 1] = cp_log
+        checkpoints['last'] = cp_log
         checkpoints['best']['valid_loss'] = best_model_validation_loss
 
         # Also dump the information about filenames and bpc to a file
@@ -177,11 +188,14 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
 
     # Get a fresh iterator, so we can make a pass through the whole text
     # TODO: Make sure we iterate through whole file when validating
+    # TODO: Fix imprecision in loss calculation
     val_iterator = data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps)
 
     # Keep track of the total loss, the number of batches we've processed and the time elapsed
+    # The last batch might have a different number of timesteps - we need to take that into account when averaging, so
+    # instead of counting batches, we count characters processed
     tot_loss = 0
-    batches_processed = 0
+    chars_processed = 0
 
     for inputs, targets in val_iterator:
 
@@ -197,11 +211,12 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
         # Forward pass
         logits = model(inputs)
 
-        # Calculate loss (see training function if confused by reshaping)
-        tot_loss += loss_function(logits.view(-1, logits.data.shape[-1]), targets.view(-1)).data[0]
-        batches_processed += 1
+        # Calculate average loss (see training function if confused by reshaping) and multiply by the number of
+        # timesteps to get the sum of losses for this batch
+        tot_loss += loss_function(logits.view(-1, logits.data.shape[-1]), targets.view(-1)).data[0] * inputs.shape[1]
+        chars_processed += inputs.shape[1]
 
     # Restore hidden state
     model.hidden = old_hidden
 
-    return tot_loss / batches_processed
+    return tot_loss / chars_processed
