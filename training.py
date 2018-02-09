@@ -108,7 +108,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
             # Compute and record training and validation losses
             if total_batches_processed % stats_frequency == 0:
                 #TODO: Do not choose the number of timesteps here, think of something smarter
-                validation_loss = evaluate_rnn(model, data_valid, loss_function, num_timesteps=batch_size * num_timesteps,
+                _, validation_loss = evaluate_rnn(model, data_valid, loss_function, num_timesteps=batch_size * num_timesteps,
                                                use_gpu=use_gpu)
 
                 # Record average loss since last recorded, reset accumulator
@@ -144,7 +144,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                     }, best_model_filename)
 
         # At the end of each epoch, save a checkpoint and stats
-        checkpoint_validation_loss = evaluate_rnn(model, data_valid, loss_function,
+        _, checkpoint_validation_loss = evaluate_rnn(model, data_valid, loss_function,
                                              num_timesteps=batch_size * num_timesteps,
                                              use_gpu=use_gpu)
         # Remove last model checkpoint and make a new one
@@ -219,4 +219,4 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
     # Restore hidden state
     model.hidden = old_hidden
 
-    return tot_loss / chars_processed
+    return chars_processed, tot_loss / chars_processed
