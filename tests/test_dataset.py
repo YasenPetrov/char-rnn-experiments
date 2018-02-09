@@ -4,9 +4,9 @@ import numpy as np
 
 # TODO: Fix sibling directory imports
 cwd = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(cwd, '../..'))
+sys.path.append(os.path.join(cwd, '..'))
 
-from lmexperiments.datautils.dataset import TextFile, Alphabet, _TOKEN_UNK, _TOKEN_PAD, _ID_UNK, _ID_PAD, Dataset
+from datautils.dataset import TextFile, Alphabet, _TOKEN_UNK, _TOKEN_PAD, _ID_UNK, _ID_PAD, Dataset
 
 
 def pytest_generate_tests(metafunc):
@@ -21,7 +21,7 @@ configs = [
         dict(memory_limit=int(5e5), batch_size=1, num_timesteps=5),
         dict(memory_limit=int(10e5), batch_size=1, num_timesteps=100),
         dict(memory_limit=int(10e11), batch_size=2, num_timesteps=10),
-        dict(memory_limit=int(10e9), batch_size=3, num_timesteps=100)
+        dict(memory_limit=int(10e9), batch_size=3, num_timesteps=1000)
     ]
 
 class TestDataset:

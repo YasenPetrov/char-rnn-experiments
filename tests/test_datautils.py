@@ -3,9 +3,9 @@ import os
 
 # TODO: Fix sibling directory imports
 cwd = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(cwd, '../..'))
+sys.path.append(os.path.join(cwd, '..'))
 
-from lmexperiments.datautils.dataset import TextFile, Alphabet, _TOKEN_UNK, _TOKEN_PAD, _ID_UNK, _ID_PAD
+from datautils.dataset import TextFile, Alphabet, _TOKEN_UNK, _TOKEN_PAD, _ID_UNK, _ID_PAD
 
 
 def test_text_iterator_reads_non_ascii_correctly():
