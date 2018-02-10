@@ -28,12 +28,10 @@ logger = get_logger(__name__)
 # TODO: Documentation
 # TODO: Avoid downspikes in validation loss in training
 # TODO: Unify interfaces of language models
-# TODO: Implement evaluation by a given model and text
 
 # TRAIZQ
 # TODO: Experiment names should start with 00>asdas
 # TODO: Make hyperparam config names meaningful
-# TODO: Model serialization
 
 
 def train(args):
@@ -191,6 +189,8 @@ def train(args):
                 plt.legend(fontsize=14)
                 plt.xlabel('Batches processed', fontsize=14)
                 plt.ylabel('BPC', fontsize=14)
+                hypers_str = str(hyperparams.__dict__)
+                plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
 
                 plt.savefig(os.path.join(out_dir, 'losses.png'))
             else: # Train an n-gram model
