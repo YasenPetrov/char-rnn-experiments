@@ -91,4 +91,3 @@ class TrainLog:
             times_elapsed_sec=log_dict_def['times']
         )
 
-
