@@ -19,7 +19,7 @@ from training import train_rnn, evaluate_rnn
 from datautils.dataset import Alphabet, Dataset, TextFile
 from utils import dict_of_lists_to_list_of_dicts
 from trainutils.trainutils import TrainLog
-from torchutils import get_optimizer
+from torchutils import get_optimizer, get_number_of_params
 from log import get_logger
 from config import EXPERIMENT_DIR, EXPERIMENT_SPEC_FILENAME, DATA_DIR, ALPHABETS_DIR, DEFAULT_MEMORY_LIMIT_BYTES
 
@@ -172,6 +172,7 @@ def train(args):
                 results_dict[i_hyperparam] = {
                     'path': best_model_filepath,
                     'valid_loss': best_model_valid_loss,
+                    'num_parameters': get_number_of_params(model),
                     'mean_sec_per_batch': mean_sec_per_batch,
                     'batch_count' : batch_count,
                     'training_time_min': training_time_sec / 60,
@@ -283,7 +284,7 @@ if __name__ == '__main__':
 
     parser.add_argument('experiment_name', metavar='experiment_name', type=str, help='The name of the experiment')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
-                        help='If set, training is performet on a GPU, if available')
+                        help='If set, training is performed on a GPU, if available')
 
     args = parser.parse_args()
     train(args)

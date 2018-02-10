@@ -1,3 +1,4 @@
+import numpy as np
 from torch import optim
 
 from log import get_logger
@@ -35,3 +36,14 @@ def get_optimizer(optimizer_spec, model):
             optim_name,str(list(OPTIM_MAP.keys()))))
     else:
         return OPTIM_MAP[optim_name](model.parameters(), **optimizer_spec['kwargs'])
+
+
+def get_number_of_params(model, trainable_only=False):
+    """
+    Get the number of parameters in a PyTorch Model
+    :param model(torch.nn.Model):
+    :param trainable_only(bool): If True, only count the trainable parameters
+    :return(int): The number of parameters in the model
+    """
+    return int(np.sum([np.prod(param.size()) for param in model.parameters()
+                       if param.requires_grad or (not trainable_only)]))
