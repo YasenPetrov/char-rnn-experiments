@@ -49,6 +49,9 @@ class TrainLog:
             else:
                 record_logger.info(record.to_string())
 
+    def get_number_of_records(self):
+        return len(self.valid_errs)
+
     def _logs_to_dict(self):
         result = {
             'times': self.times_elapsed_sec,
@@ -71,7 +74,7 @@ class TrainLog:
             logger.warning('Cannot delete or write to {0}'.format(filename))
 
     @staticmethod
-    def from_json(self, filename):
+    def from_json(filename):
         if not os.path.exists(filename):
             logger.warning('Trying to load a log from a non-existing file(will return empty log): {0}'.format(filename))
             return TrainLog()
@@ -86,8 +89,7 @@ class TrainLog:
             epochs=log_dict_def['epochs'],
             nums_batches_processed=log_dict_def['batches'],
             train_errs=log_dict_def['train_errs'],
-            train_errs_running_avgs=log_dict_def['train_errs_ra'],
+            train_err_running_avgs=log_dict_def['train_errs_ra'],
             valid_errs=log_dict_def['valid_errs'],
             times_elapsed_sec=log_dict_def['times']
         )
-

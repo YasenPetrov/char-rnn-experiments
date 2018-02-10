@@ -18,7 +18,9 @@ logger = get_logger(__name__)
 
 
 def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_state_reset_steps, num_epochs,
-              optimizer, use_gpu, stats_frequency, train_log, model_checkpoints_dir, train_log_file):
+              optimizer, use_gpu, stats_frequency, train_log, model_checkpoints_dir, train_log_file, start_epoch=0,
+              start_batches=0, start_time_sec=0, start_train_loss_accumulator=0, start_training_loss_ra=0):
+    # TODO: Get start stats from train_log
     # TODO: Document this
     torch.manual_seed(RANDOM_SEED)
 
@@ -49,15 +51,14 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
 
     # Keep track of how many batches we've processed as well as training and validation losses, how many times we have
     # recorded losses(used for running average), a running average of the training loss
-    total_train_loss = 0
-    training_loss_running_average = 0
-    loss_records = 0
+    total_train_loss = start_train_loss_accumulator
+    training_loss_running_average = start_training_loss_ra
     losses = []
     # Record rolling mean and variance times for batches
-    total_batches_processed, mean_batch_time, batch_time_m2 = 0, 0, 0
+    total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
 
-    train_start_time = time.time()
-    for epoch_number in range(num_epochs):
+    train_start_time = time.time() - start_time_sec
+    for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
         batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps)
         for inputs, targets in batch_iterator:
@@ -116,7 +117,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                 total_train_loss = 0
 
                 # Update running average loss
-                loss_records += 1
+                loss_records = train_log.get_number_of_records() + 1
                 training_loss_running_average = training_loss_running_average * ((loss_records - 1) / loss_records) + \
                     training_loss * (1 / loss_records)
 
@@ -140,7 +141,9 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                         'epoch': epoch_number + 1,
                         'valid_loss': validation_loss,
                         'state_dict': model.state_dict(),
-                        'optimizer' : optimizer.state_dict()
+                        'optimizer' : optimizer.state_dict(),
+                        'training_loss_ra': training_loss_running_average,
+                        'training_loss_accumulator': total_train_loss
                     }, best_model_filename)
 
         # At the end of each epoch, save a checkpoint and stats
@@ -155,7 +158,9 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
             'epoch': epoch_number + 1,
             'valid_loss': checkpoint_validation_loss,
             'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict()
+            'optimizer': optimizer.state_dict(),
+            'training_loss_ra': training_loss_running_average,
+            'training_loss_accumulator': total_train_loss
         }, checkpoint_filename)
 
         if best_model_validation_loss is None or best_model_validation_loss > checkpoint_validation_loss:
@@ -164,7 +169,9 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                 'epoch': epoch_number + 1,
                 'valid_loss': checkpoint_validation_loss,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()
+                'optimizer': optimizer.state_dict(),
+                'training_loss_ra': training_loss_running_average,
+                'training_loss_accumulator': total_train_loss
             }, best_model_filename)
 
         # Dump training log - if something fails during the next epoch, at least we'll have kept what we have so far

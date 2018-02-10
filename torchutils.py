@@ -1,6 +1,12 @@
+import os
+import json
+
 import numpy as np
+import torch
 from torch import optim
 
+from models.rnn import get_rnn_for_hyperparams
+from models.utils import RNN_Hyperparameters
 from log import get_logger
 
 logger = get_logger(__name__)
@@ -47,3 +53,23 @@ def get_number_of_params(model, trainable_only=False):
     """
     return int(np.sum([np.prod(param.size()) for param in model.parameters()
                        if param.requires_grad or (not trainable_only)]))
+
+
+def load_checkpoint(out_dir, config, alphabet_size, use_gpu, which='last'):
+    # Load model and optimizer
+    checkpoint_log_file = os.path.join(out_dir, 'checkpoints/checkpoints.json')
+    with open(os.path.join(out_dir, 'checkpoints/checkpoints.json'), 'r') as fp:
+        checkpoint_log = json.load(fp)
+
+    checkpoint = torch.load(checkpoint_log[which]['filename'])
+
+    hyperparams = RNN_Hyperparameters(**config)
+
+    # Load model and optimizer
+    model = get_rnn_for_hyperparams(hyperparams, alphabet_size, use_gpu)
+    model.load_state_dict(checkpoint['state_dict'])
+
+    optimizer = get_optimizer(config['optimizer'], model)
+    optimizer.load_state_dict(checkpoint['optimizer'])
+
+    return model, optimizer, checkpoint['training_loss_accumulator'], checkpoint['training_loss_ra']

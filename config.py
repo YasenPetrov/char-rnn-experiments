@@ -15,6 +15,8 @@ ALPHABETS_DIR = os.path.join(PROJECT_HOME, 'alphabets')
 
 # All experiment folders should have file with this name inside
 EXPERIMENT_SPEC_FILENAME = 'spec.json'
+RESUME_EXPERIMENT_SPEC_FILENAME = 'resume_spec.json'
+
 
 # For seeding RNGs while training
 RANDOM_SEED = 15243

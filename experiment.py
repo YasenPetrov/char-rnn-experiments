@@ -10,7 +10,7 @@ import matplotlib
 # We do not need to show a figure - the line below makes sure we do not look for a display to show one
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from torch import nn
+import torch
 
 from models.rnn import RNN_LM, get_rnn_for_hyperparams
 from models.ngram import Ngram_LM
@@ -19,9 +19,10 @@ from training import train_rnn, evaluate_rnn
 from datautils.dataset import Alphabet, Dataset, TextFile
 from utils import dict_of_lists_to_list_of_dicts
 from trainutils.trainutils import TrainLog
-from torchutils import get_optimizer, get_number_of_params
+from torchutils import get_optimizer, get_number_of_params, load_checkpoint
 from log import get_logger
 from config import EXPERIMENT_DIR, EXPERIMENT_SPEC_FILENAME, DATA_DIR, ALPHABETS_DIR, DEFAULT_MEMORY_LIMIT_BYTES
+from config import RESUME_EXPERIMENT_SPEC_FILENAME
 
 logger = get_logger(__name__)
 
@@ -33,6 +34,39 @@ logger = get_logger(__name__)
 # TODO: Experiment names should start with 00>asdas
 # TODO: Make hyperparam config names meaningful
 
+
+def on_train_end(best_valid_loss_overall, results_dict, i_hyperparam, hyperparams, train_log, out_dir, model,
+                 train_results, experiment_results_filename):
+    best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, batch_count, \
+        training_time_sec = train_results
+    # Keep the key for the stats of the best model in the dictionary with stats
+    if best_valid_loss_overall is None or best_model_valid_loss < best_valid_loss_overall:
+        results_dict['best_key'] = str(i_hyperparam)
+        best_valid_loss_overall = best_model_valid_loss
+
+    logger.info('End of training')
+
+    # Plot losses and save image
+    plt.figure(figsize=(12, 8))
+    plt.grid()
+    plt.plot(train_log.nums_batches_processed, train_log.train_errs, label='Train')
+    plt.plot(train_log.nums_batches_processed, train_log.train_err_running_avgs, label='Train(RA)')
+    plt.plot(train_log.nums_batches_processed, train_log.valid_errs, label='Valid.')
+    plt.legend(fontsize=14)
+    plt.xlabel('Batches processed', fontsize=14)
+    plt.ylabel('BPC', fontsize=14)
+    hypers_str = str(hyperparams.__dict__)
+    plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
+
+    img_path = os.path.join(out_dir, 'losses.png')
+    if os.path.exists(img_path):
+        os.remove(img_path)
+    plt.savefig(img_path)
+
+    with open(experiment_results_filename, 'w+') as fp:
+        json.dump(results_dict, fp, indent=2)
+
+    return best_valid_loss_overall, results_dict
 
 def train(args):
     logger.info('\n{0}\nStarting experiment {1}\n{2}'.format('=' * 30, args.experiment_name, '=' * 30))
@@ -92,6 +126,7 @@ def train(args):
 
     # Stores stats for different models - store the cwd so I know which machine I've ran this from
     results_dict = {'cwd' : os.getcwd()}
+    experiment_results_filename = os.path.join(experiment_out_dir, 'results.json')
 
     # Create data providers
     data_train = Dataset(train_filename, alphabet, DEFAULT_MEMORY_LIMIT_BYTES)
@@ -124,12 +159,6 @@ def train(args):
                         ))
                     hyperparams.hidden_size = alphabet.get_size()
 
-                # Create model
-                # model = RNN_LM(hyperparams.hidden_size, alphabet.get_size(), hyperparams.batch_size,
-                #                hyperparams.num_layers, hyperparams.network_type, args.use_gpu,
-                #                hyperparams.recurrent_dropout,
-                #                hyperparams.linear_dropout)
-
                 model = get_rnn_for_hyperparams(hyperparams, alphabet.get_size(), args.use_gpu)
 
                 # Create optimizer object
@@ -145,8 +174,7 @@ def train(args):
                 train_log = TrainLog()
 
                 # Perform training
-                best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd,\
-                batch_count, training_time_sec = train_rnn(
+                train_results = train_rnn(
                     model=model,
                     data_train=data_train,
                     data_valid=data_valid,
@@ -161,38 +189,25 @@ def train(args):
                     model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
                     train_log_file=os.path.join(out_dir, 'train_log.json')
                 )
-
-                # Keep the key for the stats of the best model in the dictionary with stats
-                if best_valid_loss_overall is None or best_model_valid_loss < best_valid_loss_overall:
-                    results_dict['best_key'] = str(i_hyperparam)
-                    best_valid_loss_overall = best_model_valid_loss
+                best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
+                batch_count, training_time_sec = train_results
 
                 results_dict[i_hyperparam] = {
                     'path': best_model_filepath,
                     'valid_loss': best_model_valid_loss,
                     'num_parameters': get_number_of_params(model),
                     'mean_sec_per_batch': mean_sec_per_batch,
-                    'batch_count' : batch_count,
+                    'batch_count': batch_count,
                     'training_time_min': training_time_sec / 60,
-                    'sec_per_batch_sd' : sec_per_batch_sd,
+                    'sec_per_batch_sd': sec_per_batch_sd,
                     'config': hyperparams.__dict__
                 }
 
-                logger.info('End of training')
+                # Update best results, save figures and logs
+                best_valid_loss_overall, results_dict = on_train_end(best_valid_loss_overall, results_dict,
+                                                                     i_hyperparam, hyperparams, train_log, out_dir,
+                                                                     model, train_results, experiment_results_filename)
 
-                # Plot losses and save image
-                plt.figure(figsize=(12, 8))
-                plt.grid()
-                plt.plot(train_log.nums_batches_processed, train_log.train_errs, label='Train')
-                plt.plot(train_log.nums_batches_processed, train_log.train_err_running_avgs, label='Train(RA)')
-                plt.plot(train_log.nums_batches_processed, train_log.valid_errs, label='Valid.')
-                plt.legend(fontsize=14)
-                plt.xlabel('Batches processed', fontsize=14)
-                plt.ylabel('BPC', fontsize=14)
-                hypers_str = str(hyperparams.__dict__)
-                plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
-
-                plt.savefig(os.path.join(out_dir, 'losses.png'))
             else: # Train an n-gram model
                 if not os.path.exists(experiment_out_dir):
                     os.makedirs(experiment_out_dir)
@@ -241,8 +256,7 @@ def train(args):
     experiment_duration_min = (experiment_end - experiment_start) / 60
     results_dict['experiment_duration_min'] = experiment_duration_min
 
-    best_stats_filename = os.path.join(experiment_out_dir, 'results.json')
-    with open(best_stats_filename, 'w+') as fp:
+    with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
 
     # Plot n-gram performance across hyperparameters
@@ -278,6 +292,117 @@ def train(args):
                     plt.close()
 
 
+def resume_training(args):
+    logger.info('\n{0}\nResuming experiment {1}\n{2}'.format('=' * 30, args.experiment_name, '=' * 30))
+    # We expect to find a spec.json file in a folder with the same name as the experiment under the main experiment dir
+    experiment_folder = os.path.join(EXPERIMENT_DIR, args.experiment_name)
+
+    if not os.path.exists(experiment_folder):
+        raise FileNotFoundError(experiment_folder)
+
+    spec_filepath = os.path.join(experiment_folder, EXPERIMENT_SPEC_FILENAME)
+    resume_spec_filepath = os.path.join(experiment_folder, RESUME_EXPERIMENT_SPEC_FILENAME)
+    experiment_out_dir = os.path.join(experiment_folder, 'out')
+    experiment_results_filename = os.path.join(experiment_out_dir, 'results.json')
+
+
+    if not os.path.exists(experiment_results_filename):
+        logger.warning('No experiment results file found while trying to resume experiment')
+        raise FileNotFoundError(experiment_results_filename)
+
+    with open(experiment_results_filename, 'r') as fp:
+        results_dict = json.load(fp)
+    with open(spec_filepath, 'r') as fp:
+        spec = json.load(fp)
+    with open(resume_spec_filepath, 'r') as fp:
+        resume_spec = json.load(fp)
+
+    # Alphabet, data
+    data_folder = os.path.join(DATA_DIR, spec['data_folder'])
+    train_filename = os.path.join(data_folder, 'train.txt')
+    valid_filename = os.path.join(data_folder, 'valid.txt')
+
+    alphabet = Alphabet.from_json(os.path.join(experiment_folder, 'alphabet.json'))
+
+    # Create data providers
+    data_train = Dataset(train_filename, alphabet, DEFAULT_MEMORY_LIMIT_BYTES)
+    data_valid = Dataset(valid_filename, alphabet, DEFAULT_MEMORY_LIMIT_BYTES)
+
+    best_valid_loss_overall = results_dict[results_dict['best_key']]['valid_loss']
+
+    experiment_start = time.time()
+
+    # Which experiments do we want to resume? All hyperparameter combinations have integer ids in the result file
+    for i_hyperparam in resume_spec['ids']:
+        out_dir = os.path.join(experiment_out_dir, str(i_hyperparam))
+
+        # Load previous training results
+        train_log = TrainLog.from_json(os.path.join(out_dir, 'train_log.json'))
+
+        # Load hyperparameters
+        results_dict[str(i_hyperparam)]['config']['num_epochs'] += resume_spec['num_epochs']
+        config = results_dict[str(i_hyperparam)]['config']
+        hyperparams = RNN_Hyperparameters(**config)
+
+        model, optimizer, train_loss_accumulator, train_loss_ra = load_checkpoint(
+            out_dir, config, alphabet.get_size(), args.use_gpu, which='last')
+
+        logger.info('\n{0}\nResuming training training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
+            "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(resume_spec['ids'])
+        ))
+        logger.info('Training for {0} more epochs'.format(resume_spec['num_epochs']))
+
+        # Perform training
+        train_results = train_rnn(
+            model=model,
+            data_train=data_train,
+            data_valid=data_valid,
+            batch_size=hyperparams.batch_size,
+            num_timesteps=hyperparams.num_timesteps,
+            hidden_state_reset_steps=hyperparams.reset_state_every,
+            num_epochs=hyperparams.num_epochs,
+            optimizer=optimizer,
+            use_gpu=args.use_gpu,
+            stats_frequency=spec['batches_between_stats'],
+            train_log=train_log,
+            model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
+            train_log_file=os.path.join(out_dir, 'train_log.json'),
+            start_epoch=train_log.epochs[-1],
+            start_batches=results_dict[str(i_hyperparam)]['batch_count'],
+            start_time_sec=results_dict[str(i_hyperparam)]['training_time_min'] * 60,
+            start_train_loss_accumulator=train_loss_accumulator,
+            start_training_loss_ra=train_loss_ra,
+        )
+        best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
+        batch_count, training_time_sec = train_results
+
+        old_results = results_dict[str(i_hyperparam)]
+        results_dict[str(i_hyperparam)] = {
+            'path': best_model_filepath,
+            'valid_loss': best_model_valid_loss,
+            'num_parameters': get_number_of_params(model),
+            'mean_sec_per_batch': batch_count / training_time_sec,
+            'batch_count': batch_count,
+            'training_time_min': training_time_sec / 60,
+            'sec_per_batch_sd': 0,
+            'config': hyperparams.__dict__
+        }
+
+        # Update best results, save figures and logs
+        best_valid_loss_overall, results_dict = on_train_end(best_valid_loss_overall, results_dict,
+                                                             i_hyperparam, hyperparams, train_log, out_dir,
+                                                             model, train_results, experiment_results_filename)
+    # Record time and save stats
+    experiment_end = time.time()
+    experiment_duration_min = (experiment_end - experiment_start) / 60
+    results_dict['experiment_duration_min'] += experiment_duration_min
+
+    with open(experiment_results_filename, 'w+') as fp:
+        json.dump(results_dict, fp, indent=2)
+
+    logger.info('Training complete')
+
+
 if __name__ == '__main__':
     # TODO: Help messages
     parser = argparse.ArgumentParser(description='''Runs a training or evaluation session''')
@@ -285,6 +410,12 @@ if __name__ == '__main__':
     parser.add_argument('experiment_name', metavar='experiment_name', type=str, help='The name of the experiment')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
                         help='If set, training is performed on a GPU, if available')
+    parser.add_argument('--resume', dest='resume', action='store_const', default=False, const=True,
+                        help='If set, training is continued for the specified sets of hyperparams and numbers of' +
+                             'epochs specified in resume_spec.json in the experiment folder')
 
     args = parser.parse_args()
-    train(args)
+    if args.resume:
+        resume_training(args)
+    else:
+        train(args)
