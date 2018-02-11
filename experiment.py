@@ -184,7 +184,7 @@ def train(args):
                     num_epochs=hyperparams.num_epochs,
                     optimizer=optimizer,
                     use_gpu=args.use_gpu,
-                    stats_frequency=spec['batches_between_stats'],
+                    stats_frequency=hyperparams.batches_between_stats,
                     train_log=train_log,
                     model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
                     train_log_file=os.path.join(out_dir, 'train_log.json')
@@ -363,7 +363,7 @@ def resume_training(args):
             num_epochs=hyperparams.num_epochs,
             optimizer=optimizer,
             use_gpu=args.use_gpu,
-            stats_frequency=spec['batches_between_stats'],
+            stats_frequency=results_dict[str(i_hyperparam)]['config']['batches_between_stats'],
             train_log=train_log,
             model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
             train_log_file=os.path.join(out_dir, 'train_log.json'),

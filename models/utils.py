@@ -23,7 +23,9 @@ class Hyperparameters:
 
 class RNN_Hyperparameters(Hyperparameters):
     def __init__(self, network_type, hidden_size, num_layers, batch_size, num_timesteps, reset_state_every,
-                 optimizer, learning_rate, num_epochs, l2_penalty, recurrent_dropout, linear_dropout):
+                 optimizer, learning_rate, num_epochs, l2_penalty, recurrent_dropout, linear_dropout,
+                 batches_between_stats):
+        self.batches_between_stats = batches_between_stats
         self.linear_dropout = linear_dropout
         self.recurrent_dropout = recurrent_dropout
         self.l2_penalty = l2_penalty
