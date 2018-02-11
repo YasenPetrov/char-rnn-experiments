@@ -413,8 +413,11 @@ if __name__ == '__main__':
     parser.add_argument('--resume', dest='resume', action='store_const', default=False, const=True,
                         help='If set, training is continued for the specified sets of hyperparams and numbers of' +
                              'epochs specified in resume_spec.json in the experiment folder')
+    parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
 
     args = parser.parse_args()
+    if args.use_gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
     if args.resume:
         resume_training(args)
     else:

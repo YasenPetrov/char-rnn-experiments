@@ -66,8 +66,11 @@ if __name__ == '__main__':
                         help='Path to a UTF-8 encoded file for the model to be evaluated against')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
                         help='If set, evaluation is performed on a GPU, if available')
+    parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
 
     args = parser.parse_args()
+    if args.use_gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
     eval_start = time.time()
     chars_processed, loss = evaluate(args)
