@@ -10,12 +10,17 @@ def dict_of_lists_to_list_of_dicts(dict_of_lists):
     return [dict(zip(dict_of_lists.keys(), combo)) for combo in combinations]
 
 
-def clean_and_split_file(source_file, destination_dir, train_prop, valid_prop, test_prop, alphabet_file=None):
+def clean_and_split_file(source_file, destination_dir, train_prop, valid_prop, test_prop, use_first_n_characters=0,
+                         alphabet_file=None):
     if not train_prop + valid_prop + test_prop == 1:
         raise ValueError('train_prop, valid_prop and test_prop should sum up to 1')
 
-    with open(source_file, 'r') as fp:
-        text = fp.read()
+    if use_first_n_characters > 0:
+        with open(source_file, 'r') as fp:
+            text = fp.read(use_first_n_characters)
+    else:
+        with open(source_file, 'r') as fp:
+            text = fp.read()
 
     if not os.path.exists(destination_dir):
         os.makedirs(destination_dir)
