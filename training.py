@@ -7,12 +7,14 @@ import time
 import torch
 from torch import nn
 from torch.autograd import Variable
+import numpy as np
 
 from config import RANDOM_SEED
 from log import get_logger
 from trainutils.trainutils import TrainLog
 from utils import update_stats_aggr
 
+LOG_2E = np.log2(np.e)
 
 logger = get_logger(__name__)
 
@@ -53,7 +55,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
     # recorded losses(used for running average), a running average of the training loss
     total_train_loss = start_train_loss_accumulator
     training_loss_running_average = start_training_loss_ra
-    losses = []
+
     # Record rolling mean and variance times for batches
     total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
 
@@ -91,7 +93,7 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
             # We flatten the results and targets before calculating the loss(pyTorch requires 1D targets) - autograd takes
             # care of backpropagating through the view() operation
             loss = loss_function(logits.contiguous().view(-1, logits.data.shape[-1]), targets.contiguous().view(-1))
-            total_train_loss += loss.data[0]
+            total_train_loss += LOG_2E * loss.data[0]
 
             # Backward pass - compute gradients, propagate gradient information back through the network
             loss.backward()
@@ -120,10 +122,6 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
                 loss_records = train_log.get_number_of_records() + 1
                 training_loss_running_average = training_loss_running_average * ((loss_records - 1) / loss_records) + \
                     training_loss * (1 / loss_records)
-
-                # Record the number of characters processed, and the losses
-                losses.append([total_batches_processed * num_timesteps * batch_size, training_loss,
-                               training_loss_running_average, validation_loss])
 
                 # Pass training stats to the TrainLog object - it will take care of storing them and logging them to
                 # appropriate channels
@@ -235,4 +233,4 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
     # Restore hidden state
     model.hidden = old_hidden
 
-    return chars_processed, tot_loss / chars_processed
+    return chars_processed, LOG_2E * (tot_loss / chars_processed)
