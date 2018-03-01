@@ -7,6 +7,9 @@ PROJECT_HOME = '.'
 # A folder in which all experiments are stored in subfolders
 EXPERIMENT_DIR = os.path.join(PROJECT_HOME, '../rnn-experiment-storage')
 
+# A folder in which all time experiments are stored in subfolders
+TIME_EXPERIMENT_DIR = os.path.join(PROJECT_HOME, '../rnn-experiment-storage/time')
+
 # A folder with a subfolder for each dataset in which 3 files are found: [train;valid;text].txt
 DATA_DIR = os.path.join(PROJECT_HOME, 'datasets')
 
