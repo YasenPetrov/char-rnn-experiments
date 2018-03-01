@@ -6,7 +6,7 @@ def text_file_to_ids_file(source_filename, dest_filename, alphabet):
     :param dest_filename:
     :param alphabet:
     """
-    with open(source_filename, 'r') as fp:
+    with open(source_filename, 'r', encoding='utf-8') as fp:
         text = fp.read()
 
     ids = alphabet.string_to_ids(text)
