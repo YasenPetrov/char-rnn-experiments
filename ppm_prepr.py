@@ -19,7 +19,10 @@ def preprocess_files_in_dir(source_dir, dest_dir):
         os.makedirs(dest_dir)
 
     for fn in ['train', 'valid', 'test']:
-        text_file_to_ids_file(os.path.join(source_dir, fn + '.txt'), os.path.join(dest_dir, fn + '_ids.txt'), alphabet)
+        # Start indexing from 1 - 0 is a special context switch symbol in Dasher and should not be used for characters
+        text_file_to_ids_file(os.path.join(source_dir, fn + '.txt'), os.path.join(dest_dir, fn + '_ids.txt'), alphabet,
+                              base=1)
+
 
 if __name__ == '__main__':
 

@@ -53,13 +53,14 @@ class Alphabet:
         self.char_to_int = char_to_int
         self.int_to_char = dict((i, c) for c, i in char_to_int.items())
 
-    def string_to_ids(self, s):
+    def string_to_ids(self, s, remove_unknown=False):
         ids = []
         for c in s:
             if c in self.char_to_int:
                 ids.append(self.char_to_int[c])
             else:
-                ids.append(_ID_UNK)
+                if not remove_unknown:
+                    ids.append(_ID_UNK)
         return ids
 
     def ids_to_string(self, ids):
