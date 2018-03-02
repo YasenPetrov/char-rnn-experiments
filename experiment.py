@@ -216,7 +216,7 @@ def train(args):
                 train_file_obj = TextFile(train_filename)
                 valid_file_obj = TextFile(valid_filename)
 
-                model = Ngram_LM(hyperparams.n, alphabet.get_size())
+                model = Ngram_LM(hyperparams.n, alphabet)
 
                 model.train(train_file_obj)
                 logger.info('Training complete. Now evaluating on training set')
