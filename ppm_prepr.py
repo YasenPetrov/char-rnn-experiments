@@ -2,7 +2,7 @@ import os
 import argparse
 
 from datautils.dataset import Alphabet
-from datautils.mics import text_file_to_ids_file
+from datautils.misc import text_file_to_ids_file
 
 
 def preprocess_files_in_dir(source_dir, dest_dir):
