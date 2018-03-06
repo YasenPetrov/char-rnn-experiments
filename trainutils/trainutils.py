@@ -41,13 +41,13 @@ class TrainLog:
         self.train_err_running_avgs.append(record.train_err_running_avg)
         self.valid_errs.append(record.valid_err)
 
-    def log_record(self, record, record_logger, log=True):
+    def log_record(self, record, record_logger, log=True, experiment_name=''):
         self._add_record(record)
         if log:
             if logger is None:
                 logger.warning('Trying to log a record but no logger is provided')
             else:
-                record_logger.info(record.to_string())
+                record_logger.info(experiment_name + ': ' + record.to_string())
 
     def get_number_of_records(self):
         return len(self.valid_errs)

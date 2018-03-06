@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     train_log = TrainLog()
     losses1 = train_rnn(model, data_train, data_val, batch_size, num_timesteps, hidden_state_reset_interval, 3,
-                        optimizer, True, plot_every, train_log)
+                        optimizer, True, plot_every, train_log, experiment_name='Test_experiment')
 
     train_log.dump_to_json('log.json')
 

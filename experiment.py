@@ -138,8 +138,8 @@ def train(args):
     experiment_start = time.time()
 
     for i_hyperparam, hyperparams in enumerate(hyperparam_list):
-        logger.info('\n{0}\nStarting training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
-            "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(hyperparam_list)
+        logger.info('\n{0}\n{5}: Starting training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
+            "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(hyperparam_list), args.experiment_name
         ))
 
         try:
@@ -187,7 +187,8 @@ def train(args):
                     stats_frequency=hyperparams.batches_between_stats,
                     train_log=train_log,
                     model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
-                    train_log_file=os.path.join(out_dir, 'train_log.json')
+                    train_log_file=os.path.join(out_dir, 'train_log.json'),
+                    experiment_name=args.experiment_name
                 )
                 best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
                 batch_count, training_time_sec = train_results
@@ -219,15 +220,15 @@ def train(args):
                 model = Ngram_LM(hyperparams.n, alphabet)
 
                 model.train(train_file_obj)
-                logger.info('Training complete. Now evaluating on training set')
+                logger.info('{0}: Training complete. Now evaluating on training set'.format(args.experiment_name))
 
                 # If evaluating with adaptive counts, we want the training and validation evaluations to be indep.
                 model_copy = copy.deepcopy(model)
 
                 train_loss = model_copy.evaluate(train_file_obj, hyperparams.delta, hyperparams.adapt)
-                logger.info('Evaluated on training set. Loss: {0:.5f}'.format(train_loss))
+                logger.info('{1}: Evaluated on training set. Loss: {0:.5f}'.format(train_loss, args.experiment_name))
                 valid_loss = model.evaluate(valid_file_obj, hyperparams.delta, hyperparams.adapt)
-                logger.info('Evaluated on validation set. Loss: {0:.5f}'.format(valid_loss))
+                logger.info('{1}: Evaluated on validation set. Loss: {0:.5f}'.format(valid_loss, args.experiment_name))
 
                 ngram_stats['ns'].append(hyperparams.n)
                 ngram_stats['train_losses'].append(train_loss)
@@ -347,10 +348,10 @@ def resume_training(args):
         model, optimizer, train_loss_accumulator, train_loss_ra = load_checkpoint(
             out_dir, config, alphabet.get_size(), args.use_gpu, which='last')
 
-        logger.info('\n{0}\nResuming training training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
-            "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(resume_spec['ids'])
+        logger.info('\n{0}\n{5}: Resuming training training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
+            "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(resume_spec['ids']), args.experiment_name
         ))
-        logger.info('Training for {0} more epochs'.format(resume_spec['num_epochs']))
+        logger.info('{1}: Training for {0} more epochs'.format(resume_spec['num_epochs'], args.experiment_name))
 
         # Perform training
         train_results = train_rnn(
@@ -372,6 +373,7 @@ def resume_training(args):
             start_time_sec=results_dict[str(i_hyperparam)]['training_time_min'] * 60,
             start_train_loss_accumulator=train_loss_accumulator,
             start_training_loss_ra=train_loss_ra,
+            experiment_name=args.experiment_name
         )
         best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
         batch_count, training_time_sec = train_results
@@ -400,7 +402,7 @@ def resume_training(args):
     with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
 
-    logger.info('Training complete')
+    logger.info('{0}: Training complete'.format(args.experiment_name))
 
 
 if __name__ == '__main__':
