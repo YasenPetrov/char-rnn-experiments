@@ -24,7 +24,7 @@ class Hyperparameters:
 class RNN_Hyperparameters(Hyperparameters):
     def __init__(self, network_type, hidden_size, num_layers, batch_size, num_timesteps, reset_state_every,
                  optimizer, learning_rate, num_epochs, l2_penalty, recurrent_dropout, linear_dropout,
-                 batches_between_stats):
+                 batches_between_stats, max_grad_l2_norm=float('inf')):
         self.batches_between_stats = batches_between_stats
         self.linear_dropout = linear_dropout
         self.recurrent_dropout = recurrent_dropout
@@ -38,6 +38,7 @@ class RNN_Hyperparameters(Hyperparameters):
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.network_type = network_type
+        self.max_grad_l2_norm=max_grad_l2_norm
 
     @staticmethod
     def from_json(filename):

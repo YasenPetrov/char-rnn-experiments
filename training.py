@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_state_reset_steps, num_epochs,
               optimizer, use_gpu, stats_frequency, train_log, model_checkpoints_dir, train_log_file, start_epoch=0,
               start_batches=0, start_time_sec=0, start_train_loss_accumulator=0, start_training_loss_ra=0,
-              experiment_name=''):
+              experiment_name='', max_grad_l2_norm=float('inf')):
     # TODO: Get start stats from train_log
     # TODO: Document this
     torch.manual_seed(RANDOM_SEED)
@@ -98,6 +98,9 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
 
             # Backward pass - compute gradients, propagate gradient information back through the network
             loss.backward()
+
+            # Clip gradients to prevent them from exploding
+            nn.utils.clip_grad_norm(model.parameters(), max_grad_l2_norm)
 
             # Update the trainable parameters of the model
             optimizer.step()

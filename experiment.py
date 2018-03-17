@@ -188,7 +188,8 @@ def train(args):
                     train_log=train_log,
                     model_checkpoints_dir=os.path.join(out_dir, 'checkpoints'),
                     train_log_file=os.path.join(out_dir, 'train_log.json'),
-                    experiment_name=args.experiment_name
+                    experiment_name=args.experiment_name,
+                    max_grad_l2_norm=hyperparams.max_grad_l2_norm
                 )
                 best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
                 batch_count, training_time_sec = train_results
@@ -345,6 +346,9 @@ def resume_training(args):
         config = results_dict[str(i_hyperparam)]['config']
         hyperparams = RNN_Hyperparameters(**config)
 
+        if 'max_grad_l2_norm' in resume_spec:
+            hyperparams.max_grad_l2_norm = resume_spec['max_grad_l2_norm']
+
         model, optimizer, train_loss_accumulator, train_loss_ra = load_checkpoint(
             out_dir, config, alphabet.get_size(), args.use_gpu, which='last')
 
@@ -373,7 +377,8 @@ def resume_training(args):
             start_time_sec=results_dict[str(i_hyperparam)]['training_time_min'] * 60,
             start_train_loss_accumulator=train_loss_accumulator,
             start_training_loss_ra=train_loss_ra,
-            experiment_name=args.experiment_name
+            experiment_name=args.experiment_name,
+            max_grad_l2_norm = hyperparams.max_grad_l2_norm
         )
         best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, \
         batch_count, training_time_sec = train_results
