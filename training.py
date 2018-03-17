@@ -193,7 +193,8 @@ def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_s
            train_time_sec
 
 
-def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
+def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=False, learning_rate=0,
+                 record_stats=False, stats_interval=None, decay_coef=0):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -211,27 +212,62 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu):
     tot_loss = 0
     chars_processed = 0
 
+    if record_stats:
+        stats = {'chars_processed':[], 'loss':[]}
+        chars_since_last_stats = 0
+
+    if dynamic:
+        original_weigths = [copy.deepcopy(p.data) for p in model.parameters()]
+
     for inputs, targets in val_iterator:
-
-        start = time.time()
-
-        # Make variables volatile - we will not backpropagate here
+        # Make variables volatile - we will not backpropagate here unless we're doing dynamic evaluation
         if use_gpu:
-            inputs = Variable(torch.Tensor(inputs), volatile=True).cuda()
-            targets = Variable(torch.LongTensor(targets), volatile=True).cuda()
+            inputs = Variable(torch.Tensor(inputs), volatile=(not dynamic)).cuda()
+            targets = Variable(torch.LongTensor(targets), volatile=(not dynamic)).cuda()
         else:
-            inputs = Variable(torch.Tensor(inputs), volatile=True)
-            targets = Variable(torch.LongTensor(targets), volatile=True)
+            inputs = Variable(torch.Tensor(inputs), volatile=(not dynamic))
+            targets = Variable(torch.LongTensor(targets), volatile=(not dynamic))
+
+        if dynamic:
+            # Reset the gradiens in prep for a new step
+            model.zero_grad()
+
+            old_hidden_values = model.get_hidden_data()
+            model.hidden = model.init_hidden(batch_size=None, init_values=old_hidden_values)
 
         # Forward pass
         logits = model(inputs)
 
+        # Compute the loss on this batch
+        # We flatten the results and targets before calculating the loss(pyTorch requires 1D targets) - autograd takes
+        # care of backpropagating through the view() operation
+        loss = loss_function(logits.contiguous().view(-1, logits.data.shape[-1]), targets.contiguous().view(-1))
+
         # Calculate average loss (see training function if confused by reshaping) and multiply by the number of
         # timesteps to get the sum of losses for this batch
-        tot_loss += loss_function(logits.view(-1, logits.data.shape[-1]), targets.view(-1)).data[0] * inputs.shape[1]
+        tot_loss += loss.data[0] * inputs.shape[1]
         chars_processed += inputs.shape[1]
+
+        if record_stats:
+            chars_since_last_stats += inputs.shape[1]
+            if chars_since_last_stats >= stats_interval:
+                stats['chars_processed'].append(chars_processed)
+                stats['loss'].append(LOG_2E * tot_loss / chars_processed)
+                print(chars_processed, stats['loss'][-1])
+                chars_since_last_stats = 0
+
+        if dynamic:
+            # Backward pass - compute gradients, propagate gradient information back through the network
+            loss.backward()
+
+            # SGD with global prior update
+            for p, o in zip(model.parameters(), original_weigths):
+                p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
 
     # Restore hidden state
     model.hidden = old_hidden
+
+    if record_stats:
+        return chars_processed, LOG_2E * (tot_loss / chars_processed), stats
 
     return chars_processed, LOG_2E * (tot_loss / chars_processed)
