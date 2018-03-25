@@ -1,5 +1,4 @@
 import os
-import time
 import copy
 import json
 import time
@@ -256,7 +255,7 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
             if chars_since_last_stats >= stats_interval:
                 stats['chars_processed'].append(chars_processed)
                 stats['loss'].append(LOG_2E * tot_loss / chars_processed)
-                print(chars_processed, stats['loss'][-1])
+                logger.info('Chars processed: {0}, Loss: {1}'.format(chars_processed, stats['loss'][-1]))
                 chars_since_last_stats = 0
 
         if dynamic:
