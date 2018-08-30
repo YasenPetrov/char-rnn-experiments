@@ -253,7 +253,7 @@ def resume_experiment(args):
         # Update best results, save figures and logs
         best_valid_loss_overall, results_dict = on_rnn_experiment_end(best_valid_loss_overall, results_dict,
                                                                       i_hyperparam, hyperparams, train_log, out_dir,
-                                                                      model, train_results, experiment_results_filename)
+                                                                      train_results, experiment_results_filename)
     # Record time and save stats
     experiment_end = time.time()
     experiment_duration_min = (experiment_end - experiment_start) / 60
