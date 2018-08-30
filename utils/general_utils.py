@@ -1,6 +1,9 @@
 import os
 from itertools import product
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from datautils.dataset import Alphabet
 
 #TODO: Documentation

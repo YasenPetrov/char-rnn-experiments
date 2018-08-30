@@ -18,9 +18,7 @@ from models.rnn import get_rnn_for_hyperparams
 from models.utils import RNN_Hyperparameters
 from training import evaluate_rnn
 from log import get_logger
-from utils import dict_of_lists_to_list_of_dicts
-from torchutils import get_optimizer
-
+from utils.general_utils import dict_of_lists_to_list_of_dicts
 
 logger = get_logger(__name__)
 

@@ -11,17 +11,22 @@ import numpy as np
 from config import RANDOM_SEED
 from log import get_logger
 from trainutils.trainutils import TrainLog
-from utils import update_stats_aggr
+from utils.general_utils import update_stats_aggr
+
+from models.rnn import RNN_LM
+from datautils.dataset import Dataset
+from torch.optim import Optimizer
 
 LOG_2E = np.log2(np.e)
 
 logger = get_logger(__name__)
 
 
-def train_rnn(model, data_train, data_valid, batch_size, num_timesteps, hidden_state_reset_steps, num_epochs,
-              optimizer, use_gpu, stats_frequency, train_log, model_checkpoints_dir, train_log_file, start_epoch=0,
-              start_batches=0, start_time_sec=0, start_train_loss_accumulator=0, start_training_loss_ra=0,
-              experiment_name='', max_grad_l2_norm=float('inf')):
+def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_size: int, num_timesteps: int,
+              hidden_state_reset_steps: int, num_epochs: int, optimizer: Optimizer, use_gpu: bool, stats_frequency: int,
+              train_log: TrainLog, model_checkpoints_dir:str, train_log_file:str, start_epoch: int=0,
+              start_batches: int=0, start_time_sec: int=0, start_train_loss_accumulator: int=0,
+              start_training_loss_ra: int=0, experiment_name: str='', max_grad_l2_norm=float('inf')):
     # TODO: Get start stats from train_log
     # TODO: Document this
     torch.manual_seed(RANDOM_SEED)
@@ -215,7 +220,7 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     chars_processed = 0
 
     if record_stats:
-        stats = {'chars_processed':[], 'loss':[]}
+        stats = {'chars_processed': [], 'loss': []}
         chars_since_last_stats = 0
 
     if dynamic:

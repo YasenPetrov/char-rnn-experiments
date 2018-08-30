@@ -1,7 +1,7 @@
 import argparse
 
 from datautils.dataset import Alphabet
-from utils import clean_and_split_file
+from utils.general_utils import clean_and_split_file
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='''Preprocesses files for PPM training''')
@@ -15,5 +15,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    clean_and_split_file(args.source_file, args.dest_dir, .9, .05, .05, use_first_n_characters=args.use_first_n
-                         )
+    clean_and_split_file(args.source_file, args.dest_dir, .9, .05, .05, use_first_n_characters=args.use_first_n)
