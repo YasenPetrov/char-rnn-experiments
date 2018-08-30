@@ -4,8 +4,11 @@ experiments/
 # Data
 datasets/
 
+# Alphabets (more data)
+alphabets/
+
 # Logs
-out/logs/
+out/log/
 
 # IntelliJ
 .idea
