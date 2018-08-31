@@ -215,7 +215,7 @@ def resume_experiment(args):
         if 'max_grad_l2_norm' in resume_spec:
             hyperparams.max_grad_l2_norm = resume_spec['max_grad_l2_norm']
 
-        model, optimizer, train_loss_accumulator, train_loss_ra = load_checkpoint(
+        model, optimizer, train_loss_accumulator = load_checkpoint(
             out_dir, config, alphabet.get_size(), args.use_gpu, which='last')
 
         logger.info('\n{0}\n{5}: Resuming training training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
@@ -246,7 +246,6 @@ def resume_experiment(args):
             start_batches=results_dict[str(i_hyperparam)]['batch_count'],
             start_time_sec=results_dict[str(i_hyperparam)]['training_time_min'] * 60,
             start_train_loss_accumulator=train_loss_accumulator,
-            start_training_loss_ra=train_loss_ra,
             experiment_name=args.experiment_name,
             max_grad_l2_norm = hyperparams.max_grad_l2_norm
         )
@@ -311,4 +310,9 @@ if __name__ == '__main__':
         else:
             perform_experiment(args)
     except Exception as e:
-        slack_logging.send_message('general', slack_logging.generate_unexpected_error_message(traceback.format_exc()))
+        channel_name = 'general'
+        if args.experiment_name in slack_logging.g_channel_map:
+            channel_name = args.experiment_name
+        slack_logging.send_message(channel_name, slack_logging.generate_unexpected_error_message(traceback.format_exc(),
+                                                                                              args))
+        traceback.print_exc()

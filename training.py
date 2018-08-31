@@ -26,8 +26,8 @@ logger = get_logger(__name__)
 def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_size: int, num_timesteps: int,
               hidden_state_reset_steps: int, num_epochs: int, optimizer: Optimizer, use_gpu: bool, stats_frequency: int,
               train_log: TrainLog, model_checkpoints_dir:str, train_log_file:str, start_epoch: int=0,
-              start_batches: int=0, start_time_sec: int=0, start_train_loss_accumulator: int=0,
-              start_training_loss_ra: int=0, experiment_name: str='', max_grad_l2_norm=float('inf')):
+              start_batches: int=0, start_time_sec: int=0, start_train_loss_accumulator: int=0, experiment_name: str='',
+              max_grad_l2_norm=float('inf')):
     # TODO: Get start stats from train_log
     # TODO: Document this
     torch.manual_seed(RANDOM_SEED)
@@ -60,7 +60,6 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
     # Keep track of how many batches we've processed as well as training and validation losses, how many times we have
     # recorded losses(used for running average), a running average of the training loss
     total_train_loss = start_train_loss_accumulator
-    training_loss_running_average = start_training_loss_ra
 
     # Record rolling mean and variance times for batches
     total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
@@ -110,7 +109,6 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             # Update the trainable parameters of the model
             optimizer.step()
 
-
             batch_end_time = time.time()
             # Update running averages with the amount of time for this batch
             total_batches_processed, mean_batch_time, batch_time_m2 = update_stats_aggr(
@@ -127,17 +125,11 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                 training_loss = total_train_loss / stats_frequency
                 total_train_loss = 0
 
-                # Update running average loss
-                loss_records = train_log.get_number_of_records() + 1
-                training_loss_running_average = training_loss_running_average * ((loss_records - 1) / loss_records) + \
-                    training_loss * (1 / loss_records)
-
                 # Pass training stats to the TrainLog object - it will take care of storing them and logging them to
                 # appropriate channels
                 now = time.time()
                 time_elapsed = now - train_start_time
-                record = TrainLog.LogRecord(epoch_number + 1, total_batches_processed, training_loss,
-                                            training_loss_running_average, validation_loss,
+                record = TrainLog.LogRecord(epoch_number + 1, total_batches_processed, training_loss, validation_loss,
                                             time_elapsed_sec=int(time_elapsed))
                 train_log.log_record(record, logger, experiment_name=experiment_name)
 
@@ -149,9 +141,12 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                         'valid_loss': validation_loss,
                         'state_dict': model.state_dict(),
                         'optimizer' : optimizer.state_dict(),
-                        'training_loss_ra': training_loss_running_average,
                         'training_loss_accumulator': total_train_loss
                     }, best_model_filename)
+
+        # Count batches per epoch -- we read the training file online, we need to iterate over a file once to get this
+        if train_log.batches_per_epoch is None:
+            train_log.batches_per_epoch = total_batches_processed
 
         # At the end of each epoch, save a checkpoint and stats
         _, checkpoint_validation_loss = evaluate_rnn(model, data_valid, loss_function,
@@ -172,7 +167,6 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             'valid_loss': checkpoint_validation_loss,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-            'training_loss_ra': training_loss_running_average,
             'training_loss_accumulator': total_train_loss
         }, checkpoint_filename)
 
@@ -183,7 +177,6 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                 'valid_loss': checkpoint_validation_loss,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'training_loss_ra': training_loss_running_average,
                 'training_loss_accumulator': total_train_loss
             }, best_model_filename)
 

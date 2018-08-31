@@ -10,10 +10,9 @@ logger = get_logger(__name__)
 
 class TrainLog:
     class LogRecord:
-        def __init__(self, epoch, num_batches_processed, train_err, train_err_running_avg, valid_err, time_elapsed_sec):
+        def __init__(self, epoch, num_batches_processed, train_err, valid_err, time_elapsed_sec):
             self.time_elapsed_sec = time_elapsed_sec
             self.valid_err = valid_err
-            self.train_err_running_avg = train_err_running_avg
             self.train_err = train_err
             self.num_batches_processed = num_batches_processed
             self.epoch = epoch
@@ -21,25 +20,24 @@ class TrainLog:
         def to_string(self):
             m, s = divmod(self.time_elapsed_sec, 60)
             h, m = divmod(m, 60)
-            return 'Epoch{ep:3} Batch{ba:5} Training err. {te:.5f} Training err. RA {tera:.5f} Valid. err. {ve:.5f}'.format(
-                ep=self.epoch, ba=self.num_batches_processed, te=self.train_err, tera=self.train_err_running_avg,
+            return 'Epoch{ep:3} Batch{ba:5} Training err. {te:.5f} Valid. err. {ve:.5f}'.format(
+                ep=self.epoch, ba=self.num_batches_processed, te=self.train_err,
                 ve=self.valid_err) + ' Time elapsed: {h:02d}:{m:02d}:{s:02d}'.format(h=int(h), m=int(m), s=int(s))
 
-    def __init__(self, epochs=None, nums_batches_processed=None, train_errs=None, train_err_running_avgs=None,
-                 valid_errs=None, times_elapsed_sec=None):
+    def __init__(self, epochs=None, nums_batches_processed=None, train_errs=None, valid_errs=None,
+                 times_elapsed_sec=None, batches_per_epoch=None):
         self.times_elapsed_sec = times_elapsed_sec or []
         self.valid_errs = valid_errs or []
-        self.train_err_running_avgs = train_err_running_avgs or []
         self.train_errs = train_errs or []
         self.nums_batches_processed = nums_batches_processed or []
         self.epochs = epochs or []
+        self.batches_per_epoch = batches_per_epoch
 
     def _add_record(self, record):
         self.times_elapsed_sec.append(record.time_elapsed_sec)
         self.epochs.append(record.epoch)
         self.nums_batches_processed.append(record.num_batches_processed)
         self.train_errs.append(record.train_err)
-        self.train_err_running_avgs.append(record.train_err_running_avg)
         self.valid_errs.append(record.valid_err)
 
     def log_record(self, record, record_logger, log=True, experiment_name=''):
@@ -61,8 +59,8 @@ class TrainLog:
             'epochs' : self.epochs,
             'batches': self.nums_batches_processed,
             'train_errs': self.train_errs,
-            'train_errs_ra': self.train_err_running_avgs,
-            'valid_errs': self.valid_errs
+            'valid_errs': self.valid_errs,
+            'batches_per_epoch': self.batches_per_epoch
         }
 
         return result
@@ -88,11 +86,15 @@ class TrainLog:
         for k, v in log_dict.items():
             log_dict_def[k] = v
 
+        batches_per_epoch = None
+        if 'batches_per_epoch' in log_dict_def:
+            batches_per_epoch = log_dict_def['batches_per_epoch']
+
         return TrainLog(
             epochs=log_dict_def['epochs'],
             nums_batches_processed=log_dict_def['batches'],
             train_errs=log_dict_def['train_errs'],
-            train_err_running_avgs=log_dict_def['train_errs_ra'],
             valid_errs=log_dict_def['valid_errs'],
-            times_elapsed_sec=log_dict_def['times']
+            times_elapsed_sec=log_dict_def['times'],
+            batches_per_epoch=batches_per_epoch
         )

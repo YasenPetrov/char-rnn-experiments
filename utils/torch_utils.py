@@ -72,4 +72,4 @@ def load_checkpoint(out_dir, config, alphabet_size, use_gpu, which='last'):
     optimizer = get_optimizer(config['optimizer'], model)
     optimizer.load_state_dict(checkpoint['optimizer'])
 
-    return model, optimizer, checkpoint['training_loss_accumulator'], checkpoint['training_loss_ra']
+    return model, optimizer, checkpoint['training_loss_accumulator']

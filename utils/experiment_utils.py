@@ -164,15 +164,15 @@ def on_rnn_version_end(best_valid_loss_overall, results_dict, i_hyperparam, hype
     # Plot losses and save image
     plt.figure(figsize=(12, 8))
     plt.grid()
-    plt.plot(train_log.nums_batches_processed, train_log.train_errs, label='Train')
-    plt.plot(train_log.nums_batches_processed, train_log.train_err_running_avgs, label='Train(RA)')
-    plt.plot(train_log.nums_batches_processed, train_log.valid_errs, label='Valid.')
-    plt.legend(fontsize=14)
-    plt.xlabel('Batches processed', fontsize=14)
-    plt.ylabel('BPC', fontsize=14)
-    hypers_str = str(hyperparams.__dict__)
-    plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
-
+    plt.plot(list(map(lambda x: x / train_log.batches_per_epoch, train_log.nums_batches_processed)), train_log.train_errs,
+             label='Train', linewidth=2)
+    plt.plot(list(map(lambda x: x / train_log.batches_per_epoch, train_log.nums_batches_processed)), train_log.valid_errs,
+             label='Valid.', linewidth=2)
+    plt.xticks(list(range(1, max(train_log.epochs) + 1)))
+    plt.legend(fontsize=16)
+    plt.xlabel('Epochs', fontsize=16)
+    plt.ylabel('BPC', fontsize=16)
+    plt.title(f'{experiment_name} configuration {i_hyperparam}', fontsize=24)
     img_path = os.path.join(out_dir, 'losses.png')
     if os.path.exists(img_path):
         os.remove(img_path)
