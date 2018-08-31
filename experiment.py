@@ -3,6 +3,7 @@ import json
 import argparse
 import copy
 import time
+import traceback
 
 import matplotlib
 # We do not need to show a figure - the line below makes sure we do not look for a display to show one
@@ -14,11 +15,12 @@ from models.utils import RNN_Hyperparameters
 from training import train_rnn
 from datautils.dataset import Dataset, TextFile
 from utils.experiment_utils import plot_ngram_performance, experiment_setup, resume_experiment_setup
-from utils.experiment_utils import on_rnn_experiment_end
+from utils.experiment_utils import on_rnn_version_end
 from trainutils.trainutils import TrainLog
 from utils.torch_utils import get_optimizer, get_number_of_params, load_checkpoint
 from log import get_logger
 from config import DEFAULT_MEMORY_LIMIT_BYTES
+from utils.logging import slack_logging
 
 logger = get_logger(__name__)
 
@@ -33,6 +35,7 @@ logger = get_logger(__name__)
 
 def perform_experiment(args):
     logger.info('\n{0}\nStarting experiment {1}\n{2}'.format('=' * 30, args.experiment_name, '=' * 30))
+    slack_logging.create_channel(args.experiment_name)
 
     # Parse the experiment spec file and create the necessary file structure
     spec, train_filename, valid_filename, alphabet, hyperparam_list, experiment_out_dir = experiment_setup(args)
@@ -54,6 +57,8 @@ def perform_experiment(args):
         logger.info('\n{0}\n{5}: Starting training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
             "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(hyperparam_list), args.experiment_name
         ))
+        slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_start_message(
+            i_hyperparam + 1, len(hyperparam_list), hyperparams))
 
         try:
             if spec['model'] == 'rnn':
@@ -119,9 +124,10 @@ def perform_experiment(args):
                 }
 
                 # Update best results, save figures and logs
-                best_valid_loss_overall, results_dict = on_rnn_experiment_end(best_valid_loss_overall, results_dict,
-                                                                              i_hyperparam, hyperparams, train_log, out_dir,
-                                                                              train_results, experiment_results_filename)
+                best_valid_loss_overall, results_dict = on_rnn_version_end(best_valid_loss_overall, results_dict,
+                                                                           i_hyperparam, hyperparams, train_log, out_dir,
+                                                                           train_results, experiment_results_filename,
+                                                                           args.experiment_name)
 
             else: # Train an n-gram model
                 if not os.path.exists(experiment_out_dir):
@@ -174,6 +180,9 @@ def perform_experiment(args):
     with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
 
+    slack_logging.upload_file(args.experiment_name,
+                              **slack_logging.generate_results_message(experiment_results_filename))
+
     # Plot n-gram performance across hyperparameters
     if not spec['model'] == 'rnn':
         plot_ngram_performance(ngram_stats, experiment_out_dir, spec)
@@ -184,6 +193,8 @@ def resume_experiment(args):
 
     results_dict, resume_spec, experiment_out_dir, alphabet, data_train, data_valid,\
         experiment_results_filename = resume_experiment_setup(args)
+
+    slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_resume_message(resume_spec))
 
     best_valid_loss_overall = results_dict[results_dict['best_key']]['valid_loss']
 
@@ -210,6 +221,10 @@ def resume_experiment(args):
         logger.info('\n{0}\n{5}: Resuming training training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
             "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(resume_spec['ids']), args.experiment_name
         ))
+
+        slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_start_message(
+            i_hyperparam + 1, len(resume_spec['ids']), hyperparams, resuming=True))
+
         logger.info('{1}: Training for {0} more epochs'.format(resume_spec['num_epochs'], args.experiment_name))
 
         # Perform training
@@ -251,9 +266,10 @@ def resume_experiment(args):
         }
 
         # Update best results, save figures and logs
-        best_valid_loss_overall, results_dict = on_rnn_experiment_end(best_valid_loss_overall, results_dict,
-                                                                      i_hyperparam, hyperparams, train_log, out_dir,
-                                                                      train_results, experiment_results_filename)
+        best_valid_loss_overall, results_dict = on_rnn_version_end(best_valid_loss_overall, results_dict,
+                                                                   i_hyperparam, hyperparams, train_log, out_dir,
+                                                                   train_results, experiment_results_filename,
+                                                                   args.experiment_name)
     # Record time and save stats
     experiment_end = time.time()
     experiment_duration_min = (experiment_end - experiment_start) / 60
@@ -263,6 +279,9 @@ def resume_experiment(args):
         json.dump(results_dict, fp, indent=2)
 
     logger.info('{0}: Training complete'.format(args.experiment_name))
+
+    slack_logging.upload_file(args.experiment_name,
+                              **slack_logging.generate_results_message(experiment_results_filename))
 
 
 if __name__ == '__main__':
@@ -275,12 +294,21 @@ if __name__ == '__main__':
     parser.add_argument('--resume', dest='resume', action='store_const', default=False, const=True,
                         help='If set, training is continued for the specified sets of hyperparams and numbers of' +
                              'epochs specified in resume_spec.json in the experiment folder')
+    parser.add_argument('--slack', dest='log_to_slack', action='store_const', default=False, const=True,
+                        help='If set, some training logs are forwarded to Slack. Slack token must be set in SLACK_API_TOKEN')
+    parser.add_argument('--verbose', '-v', action='count', default=1)
     parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
 
     args = parser.parse_args()
+
     if args.use_gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
-    if args.resume:
-        resume_experiment(args)
-    else:
-        perform_experiment(args)
+    if args.log_to_slack:
+        slack_logging.init_slack_client(verbosity=args.verbose)
+    try:
+        if args.resume:
+            resume_experiment(args)
+        else:
+            perform_experiment(args)
+    except Exception as e:
+        slack_logging.send_message('general', slack_logging.generate_unexpected_error_message(traceback.format_exc()))

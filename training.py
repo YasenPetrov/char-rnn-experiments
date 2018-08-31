@@ -12,6 +12,7 @@ from config import RANDOM_SEED
 from log import get_logger
 from trainutils.trainutils import TrainLog
 from utils.general_utils import update_stats_aggr
+from utils.logging import slack_logging
 
 from models.rnn import RNN_LM
 from datautils.dataset import Dataset
@@ -156,6 +157,12 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
         _, checkpoint_validation_loss = evaluate_rnn(model, data_valid, loss_function,
                                              num_timesteps=batch_size * num_timesteps,
                                              use_gpu=use_gpu)
+
+        # Send Slack message with stats
+        message = slack_logging.generate_epoch_end_message(epoch_number + 1, num_epochs,
+                                                           checkpoint_validation_loss, time.time() - train_start_time)
+        slack_logging.send_message(experiment_name, message)
+
         # Remove last model checkpoint and make a new one
         if os.path.exists(os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number))):
             os.remove(os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number)))

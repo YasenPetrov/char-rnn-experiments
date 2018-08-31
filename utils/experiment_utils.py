@@ -10,6 +10,7 @@ from config import DEFAULT_MEMORY_LIMIT_BYTES
 from utils.general_utils import dict_of_lists_to_list_of_dicts
 from datautils.dataset import Alphabet, Dataset
 from models.utils import RNN_Hyperparameters, Ngram_Hyperparameters
+from utils.logging import slack_logging
 
 from log import get_logger
 
@@ -149,8 +150,8 @@ def resume_experiment_setup(args):
     return results_dict, resume_spec, experiment_out_dir, alphabet, data_train, data_valid, experiment_results_filename
 
 
-def on_rnn_experiment_end(best_valid_loss_overall, results_dict, i_hyperparam, hyperparams, train_log, out_dir,
-                          train_results, experiment_results_filename):
+def on_rnn_version_end(best_valid_loss_overall, results_dict, i_hyperparam, hyperparams, train_log, out_dir,
+                       train_results, experiment_results_filename, experiment_name):
     best_model_filepath, best_model_valid_loss, mean_sec_per_batch, sec_per_batch_sd, batch_count, \
         training_time_sec = train_results
     # Keep the key for the stats of the best model in the dictionary with stats
@@ -179,5 +180,7 @@ def on_rnn_experiment_end(best_valid_loss_overall, results_dict, i_hyperparam, h
 
     with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
+
+    slack_logging.upload_file(experiment_name, **slack_logging.generate_plot_message(img_path))
 
     return best_valid_loss_overall, results_dict

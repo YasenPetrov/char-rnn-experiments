@@ -2,6 +2,7 @@ import os
 import json
 from collections import defaultdict
 
+from utils.logging import slack_logging
 from log import get_logger
 
 logger = get_logger(__name__)
@@ -48,6 +49,8 @@ class TrainLog:
                 logger.warning('Trying to log a record but no logger is provided')
             else:
                 record_logger.info(experiment_name + ': ' + record.to_string())
+            if slack_logging.SlackClient is not None:
+                slack_logging.send_message(experiment_name, slack_logging.generate_train_stats_message(record))
 
     def get_number_of_records(self):
         return len(self.valid_errs)
