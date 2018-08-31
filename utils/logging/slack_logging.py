@@ -172,7 +172,6 @@ def generate_train_stats_message(log_record):
 
 
 def generate_epoch_end_message(epoch_that_ended: int, total_epochs:int, validation_loss: float, time_elapsed_sec: float):
-    # TODO: Prettify this -- title, lines ...
     text = f'*Epoch* [{epoch_that_ended}/{total_epochs}] *Val.loss*: {validation_loss:.4f}' \
            f' *Time*: {str(timedelta(seconds=time_elapsed_sec // 1))}'
     attachment = {
@@ -199,9 +198,12 @@ def generate_results_message(filename):
     }
 
 
-def generate_unexpected_error_message(stacktrace: str):
+def generate_unexpected_error_message(stacktrace: str, args: Optional[dict]=None):
+    args_str = ''
+    if args is not None:
+        args_str = f'\nParams:```{str(args)}``` Stacktrace: '
     attachment = {
-        'text': f'Something went wrong:```{stacktrace}```',
+        'text': f'Something went wrong:{args_str}```{stacktrace}```',
         "title": "ERROR",
         'color': '#ff0000',
         'mrkdwn': True
