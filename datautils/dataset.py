@@ -156,7 +156,7 @@ class Dataset:
         self._targets_data = None
         self.memory_limit_bytes = memory_limit_bytes
 
-    def get_batch_iterator(self, batch_size, num_timesteps):
+    def get_batch_iterator(self, batch_size, num_timesteps, remove_unknown_tokens=False):
         #TODO: Support for output in the form (num_timesteps x num_batches x alphabet_size)
         # Decide on an appropriate chunk size for reading text we will be reading
         max_chars = self.memory_limit_bytes // (8 * self.alphabet.get_size())
@@ -174,7 +174,7 @@ class Dataset:
         # Iterate over chunks of the file
         for chunk in self._textfile.get_iterator(max_chunk_size):
             # Turn chunk into list of ids
-            ids = self.alphabet.string_to_ids(chunk)
+            ids = self.alphabet.string_to_ids(chunk, remove_unknown=remove_unknown_tokens)
 
             # If this data provider will be used with pyTorch RNNs - these models take input of form
             # <batch_size x num_timesteps x alphabet_size>, where num_timesteps can vary but batch_size cannot
