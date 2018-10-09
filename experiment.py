@@ -35,7 +35,7 @@ logger = get_logger(__name__)
 
 def perform_experiment(args):
     logger.info('\n{0}\nStarting experiment {1}\n{2}'.format('=' * 30, args.experiment_name, '=' * 30))
-    slack_logging.create_channel(args.experiment_name)
+    slack_logging.create_channel(args.slack_channel_name)
 
     # Parse the experiment spec file and create the necessary file structure
     spec, train_filename, valid_filename, alphabet, hyperparam_list, experiment_out_dir = experiment_setup(args)
@@ -57,7 +57,7 @@ def perform_experiment(args):
         logger.info('\n{0}\n{5}: Starting training for model {3} out of {4} with hyperparameters:\n{1}\n{2}'.format(
             "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(hyperparam_list), args.experiment_name
         ))
-        slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_start_message(
+        slack_logging.send_message(args.slack_channel_name, slack_logging.generate_experiment_start_message(
             i_hyperparam + 1, len(hyperparam_list), hyperparams))
 
         try:
@@ -180,7 +180,7 @@ def perform_experiment(args):
     with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
 
-    slack_logging.upload_file(args.experiment_name,
+    slack_logging.upload_file(args.slack_channel_name,
                               **slack_logging.generate_results_message(experiment_results_filename))
 
     # Plot n-gram performance across hyperparameters
@@ -194,7 +194,7 @@ def resume_experiment(args):
     results_dict, resume_spec, experiment_out_dir, alphabet, data_train, data_valid,\
         experiment_results_filename = resume_experiment_setup(args)
 
-    slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_resume_message(resume_spec))
+    slack_logging.send_message(args.slack_channel_name, slack_logging.generate_experiment_resume_message(resume_spec))
 
     best_valid_loss_overall = results_dict[results_dict['best_key']]['valid_loss']
 
@@ -222,7 +222,7 @@ def resume_experiment(args):
             "-" * 50, hyperparams.to_string(), '-' * 50, i_hyperparam + 1, len(resume_spec['ids']), args.experiment_name
         ))
 
-        slack_logging.send_message(args.experiment_name, slack_logging.generate_experiment_start_message(
+        slack_logging.send_message(args.slack_channel_name, slack_logging.generate_experiment_start_message(
             i_hyperparam + 1, len(resume_spec['ids']), hyperparams, resuming=True))
 
         logger.info('{1}: Training for {0} more epochs'.format(resume_spec['num_epochs'], args.experiment_name))
@@ -279,7 +279,7 @@ def resume_experiment(args):
 
     logger.info('{0}: Training complete'.format(args.experiment_name))
 
-    slack_logging.upload_file(args.experiment_name,
+    slack_logging.upload_file(args.slack_channel_name,
                               **slack_logging.generate_results_message(experiment_results_filename))
 
 
@@ -299,6 +299,9 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
 
     args = parser.parse_args()
+
+    # Slack has a max channel name length
+    args.slack_channel_name = args.experiment_name[:slack_logging.MAX_CHANNEL_NAME_LENGTH]
 
     if args.use_gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id

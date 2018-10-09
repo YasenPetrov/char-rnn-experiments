@@ -181,6 +181,7 @@ def on_rnn_version_end(best_valid_loss_overall, results_dict, i_hyperparam, hype
     with open(experiment_results_filename, 'w+') as fp:
         json.dump(results_dict, fp, indent=2)
 
-    slack_logging.upload_file(experiment_name, **slack_logging.generate_plot_message(img_path))
+    slack_logging.upload_file(experiment_name[:slack_logging.MAX_CHANNEL_NAME_LENGTH],
+                              **slack_logging.generate_plot_message(img_path))
 
     return best_valid_loss_overall, results_dict

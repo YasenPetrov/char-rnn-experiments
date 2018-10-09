@@ -12,6 +12,7 @@ from log import get_logger
 
 logger = get_logger(__name__)
 
+MAX_CHANNEL_NAME_LENGTH = 21
 
 Username = NewType('Username', str)
 ChannelName = NewType('ChannelName', str)

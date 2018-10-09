@@ -48,7 +48,8 @@ class TrainLog:
             else:
                 record_logger.info(experiment_name + ': ' + record.to_string())
             if slack_logging.SlackClient is not None:
-                slack_logging.send_message(experiment_name, slack_logging.generate_train_stats_message(record))
+                slack_logging.send_message(experiment_name[:slack_logging.MAX_CHANNEL_NAME_LENGTH],
+                                           slack_logging.generate_train_stats_message(record))
 
     def get_number_of_records(self):
         return len(self.valid_errs)

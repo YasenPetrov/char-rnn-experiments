@@ -156,7 +156,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
         # Send Slack message with stats
         message = slack_logging.generate_epoch_end_message(epoch_number + 1, num_epochs,
                                                            checkpoint_validation_loss, time.time() - train_start_time)
-        slack_logging.send_message(experiment_name, message)
+        slack_logging.send_message(experiment_name[:slack_logging.MAX_CHANNEL_NAME_LENGTH], message)
 
         # Remove last model checkpoint and make a new one
         if os.path.exists(os.path.join(model_checkpoints_dir, 'epoch.{0}.pth.tar'.format(epoch_number))):
@@ -201,7 +201,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 
 
 def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=False, learning_rate=0,
-                 record_stats=False, stats_interval=None, decay_coef=0):
+                 record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -211,7 +211,8 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     # Get a fresh iterator, so we can make a pass through the whole text
     # TODO: Make sure we iterate through whole file when validating
     # TODO: Fix imprecision in loss calculation
-    val_iterator = data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps)
+    val_iterator = data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps,
+                                           remove_unknown_tokens=remove_unknown_tokens)
 
     # Keep track of the total loss, the number of batches we've processed and the time elapsed
     # The last batch might have a different number of timesteps - we need to take that into account when averaging, so
