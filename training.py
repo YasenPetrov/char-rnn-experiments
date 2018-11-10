@@ -65,6 +65,12 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
     total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
 
     train_start_time = time.time() - start_time_sec
+    _, validation_loss = evaluate_rnn(model, data_valid, loss_function,
+                                             num_timesteps=batch_size * num_timesteps,
+                                             use_gpu=use_gpu)
+
+    grad_norms = []
+
     for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
         batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps)
@@ -104,7 +110,16 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             loss.backward()
 
             # Clip gradients to prevent them from exploding
-            nn.utils.clip_grad_norm(model.parameters(), max_grad_l2_norm)
+            total_grad_norm = nn.utils.clip_grad_norm(model.parameters(), max_grad_l2_norm)
+            parameters = list(filter(lambda p: p.grad is not None, model.parameters()))
+            total_norm = 0
+            for p in parameters:
+                param_norm = p.grad.data.norm(2)
+                total_norm += param_norm ** 2
+            total_norm = total_norm ** (1. / 2)
+            total_grad_norm_clipped = total_norm
+
+            grad_norms.append((total_batches_processed, total_grad_norm, total_grad_norm_clipped))
 
             # Update the trainable parameters of the model
             optimizer.step()
@@ -114,6 +129,11 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             total_batches_processed, mean_batch_time, batch_time_m2 = update_stats_aggr(
                 (total_batches_processed, mean_batch_time, batch_time_m2), batch_end_time - batch_start_time
             )
+
+            time_elapsed = time.time() - train_start_time
+            record = TrainLog.LogRecord(epoch_number + 1, total_batches_processed, LOG_2E * loss.data[0], validation_loss,
+                                        time_elapsed_sec=int(time_elapsed))
+            train_log.log_record(record, logger, experiment_name=experiment_name, log=False)
 
             # Compute and record training and validation losses
             if total_batches_processed % stats_frequency == 0:
@@ -143,6 +163,13 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                         'optimizer' : optimizer.state_dict(),
                         'training_loss_accumulator': total_train_loss
                     }, best_model_filename)
+
+                import pandas as pd
+                gns = pd.DataFrame(data=grad_norms,
+                                   columns=['batches_processed', 'total_grad_norm', 'total_grad_norm_clipped'])
+                gns.to_csv(os.path.join(model_checkpoints_dir, 'grad_norms.csv'), index=False)
+
+                train_log.dump_to_json(train_log_file)
 
         # Count batches per epoch -- we read the training file online, we need to iterate over a file once to get this
         if train_log.batches_per_epoch is None:
@@ -189,6 +216,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
         # Also dump the information about filenames and bpc to a file
         with open(checkpoints_log_filename, 'w+') as fp:
             json.dump(checkpoints, fp, indent=2)
+
 
     train_end_time = time.time()
     train_time_sec = train_end_time - train_start_time
