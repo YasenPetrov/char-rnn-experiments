@@ -64,6 +64,12 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
     # Record rolling mean and variance times for batches
     total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
 
+    # Make sure that the timesteps between resettings of the hidden state are a multiple of the batch size and n tsteps
+    if not hidden_state_reset_steps % (batch_size * num_timesteps) == 0:
+        logger.warn(f'Num timesteps to reset {hidden_state_reset_steps} is not a multiple of batch size {batch_size} '
+                    f'times number of timesteps {num_timesteps}. This will be changed')
+        hidden_state_reset_steps -= hidden_state_reset_steps % (batch_size * num_timesteps)
+
     train_start_time = time.time() - start_time_sec
     for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
@@ -84,7 +90,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 
             # We reset the hidden state every so often. When we do not want to do that we still need to repackage the
             # state into a new Variable so as to disassociate it from gradient information from the previous batch
-            if total_batches_processed * num_timesteps >= hidden_state_reset_steps:
+            if (total_batches_processed * num_timesteps) % hidden_state_reset_steps == 0:
                 model.hidden = model.init_hidden()
             else:
                 old_hidden_values = model.get_hidden_data()
