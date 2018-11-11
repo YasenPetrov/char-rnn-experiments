@@ -156,18 +156,25 @@ class Dataset:
         self._targets_data = None
         self.memory_limit_bytes = memory_limit_bytes
 
-    def get_batch_iterator(self, batch_size, num_timesteps, remove_unknown_tokens=False):
-        #TODO: Support for output in the form (num_timesteps x num_batches x alphabet_size)
+    def get_batch_iterator(self, batch_size, num_timesteps, remove_unknown_tokens=False, reset_steps=None):
+        # TODO: Support for output in the form (num_timesteps x num_batches x alphabet_size)
         # Decide on an appropriate chunk size for reading text we will be reading
         max_chars = self.memory_limit_bytes // (8 * self.alphabet.get_size())
         # Make chunk size a multiple of (timesteps x batch_size)
         max_chunk_size = max_chars - (max_chars % (batch_size * num_timesteps))
+        # (Optional) Make sure the chunk size is a multiple of the number of timesteps we want to reset the hidden
+        # state of our model after -- when we load a new chunk, the sequence of characers defined by the first character
+        # in every batch will not be a continuation of the same sequence from the previous chunk. If we do not reset the
+        # hidden state, we will surprise our model. We do not want to surprise our model
+        if reset_steps is not None:
+            max_chunk_size = max_chunk_size - max_chunk_size % reset_steps
+
+        assert max_chunk_size > 0
 
         if max_chunk_size < 1:
             raise MemoryError('Cannot fit a batch of size {0} of sequences of size {1} in {2} bytes of memory'.format(
                 batch_size, num_timesteps, self.memory_limit_bytes
             ))
-
 
         # Keep track of the last id in the previous chunk
         last_chunk_last_id = _ID_PAD

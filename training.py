@@ -73,7 +73,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
     train_start_time = time.time() - start_time_sec
     for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
-        batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps)
+        batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps, reset_steps=hidden_state_reset_steps)
         for inputs, targets in batch_iterator:
             batch_start_time = time.time()
 
