@@ -10,10 +10,11 @@ logger = get_logger(__name__)
 
 class TrainLog:
     class LogRecord:
-        def __init__(self, epoch, num_batches_processed, train_err, valid_err, time_elapsed_sec):
+        def __init__(self, epoch, num_batches_processed, train_err, valid_err, total_grad_norm, time_elapsed_sec):
             self.time_elapsed_sec = time_elapsed_sec
             self.valid_err = valid_err
             self.train_err = train_err
+            self.total_grad = total_grad_norm
             self.num_batches_processed = num_batches_processed
             self.epoch = epoch
 
@@ -24,21 +25,23 @@ class TrainLog:
                 ep=self.epoch, ba=self.num_batches_processed, te=self.train_err,
                 ve=self.valid_err) + ' Time elapsed: {h:02d}:{m:02d}:{s:02d}'.format(h=int(h), m=int(m), s=int(s))
 
-    def __init__(self, epochs=None, nums_batches_processed=None, train_errs=None, valid_errs=None,
+    def __init__(self, epochs=None, nums_batches_processed=None, train_errs=None, valid_errs=None, grad_norms=None,
                  times_elapsed_sec=None, batches_per_epoch=None):
         self.times_elapsed_sec = times_elapsed_sec or []
         self.valid_errs = valid_errs or []
         self.train_errs = train_errs or []
+        self.grad_norms = grad_norms or []
         self.nums_batches_processed = nums_batches_processed or []
         self.epochs = epochs or []
         self.batches_per_epoch = batches_per_epoch
 
-    def _add_record(self, record):
+    def _add_record(self, record: LogRecord):
         self.times_elapsed_sec.append(record.time_elapsed_sec)
         self.epochs.append(record.epoch)
         self.nums_batches_processed.append(record.num_batches_processed)
         self.train_errs.append(record.train_err)
         self.valid_errs.append(record.valid_err)
+        self.grad_norms.append(record.total_grad)
 
     def log_record(self, record, record_logger, log=True, experiment_name=''):
         self._add_record(record)
@@ -61,6 +64,7 @@ class TrainLog:
             'batches': self.nums_batches_processed,
             'train_errs': self.train_errs,
             'valid_errs': self.valid_errs,
+            'grad_norms': self.grad_norms,
             'batches_per_epoch': self.batches_per_epoch
         }
 
@@ -96,6 +100,7 @@ class TrainLog:
             nums_batches_processed=log_dict_def['batches'],
             train_errs=log_dict_def['train_errs'],
             valid_errs=log_dict_def['valid_errs'],
+            grad_norms=log_dict_def['grad_norms'],
             times_elapsed_sec=log_dict_def['times'],
             batches_per_epoch=batches_per_epoch
         )

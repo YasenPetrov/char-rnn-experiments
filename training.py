@@ -71,6 +71,11 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
         hidden_state_reset_steps -= hidden_state_reset_steps % (batch_size * num_timesteps)
 
     train_start_time = time.time() - start_time_sec
+
+    # Record initial validation loss
+    _, validation_loss = evaluate_rnn(model, data_valid, loss_function, num_timesteps=batch_size * num_timesteps,
+                                      use_gpu=use_gpu)
+
     for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
         batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps, reset_steps=hidden_state_reset_steps)
@@ -110,7 +115,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             loss.backward()
 
             # Clip gradients to prevent them from exploding
-            nn.utils.clip_grad_norm(model.parameters(), max_grad_l2_norm)
+            total_grad_norm = nn.utils.clip_grad_norm(model.parameters(), max_grad_l2_norm)
 
             # Update the trainable parameters of the model
             optimizer.step()
@@ -120,6 +125,13 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
             total_batches_processed, mean_batch_time, batch_time_m2 = update_stats_aggr(
                 (total_batches_processed, mean_batch_time, batch_time_m2), batch_end_time - batch_start_time
             )
+
+            # Log training loss after every batch
+            now = time.time()
+            time_elapsed = now - train_start_time
+            record = TrainLog.LogRecord(epoch_number + 1, total_batches_processed, LOG_2E * loss.data[0], validation_loss,
+                                        time_elapsed_sec=int(time_elapsed), total_grad_norm=total_grad_norm)
+            train_log.log_record(record, logger, experiment_name=experiment_name, log=False)
 
             # Compute and record training and validation losses
             if total_batches_processed % stats_frequency == 0:
@@ -136,7 +148,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                 now = time.time()
                 time_elapsed = now - train_start_time
                 record = TrainLog.LogRecord(epoch_number + 1, total_batches_processed, training_loss, validation_loss,
-                                            time_elapsed_sec=int(time_elapsed))
+                                            time_elapsed_sec=int(time_elapsed), total_grad_norm=total_grad_norm)
                 train_log.log_record(record, logger, experiment_name=experiment_name)
 
                 # If we have a new best model, update bset loss store it
