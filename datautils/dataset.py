@@ -168,6 +168,7 @@ class Dataset:
                 batch_size, num_timesteps, self.memory_limit_bytes
             ))
 
+
         # Keep track of the last id in the previous chunk
         last_chunk_last_id = _ID_PAD
 
@@ -213,5 +214,7 @@ class Dataset:
                     batch_start += num_timesteps
                     # As described above, the last batch can have a sequence of a different length
                     batch_end = min(inputs_data.shape[1], batch_end + num_timesteps)
+
+            last_chunk_last_id = ids[-1]
 
 
