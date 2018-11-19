@@ -167,7 +167,7 @@ class StepRnnLhuc(StepRnn):
         else:
             if batch_size is None:
                 batch_size = self.batch_size
-            state = Variable(torch.ones(batch_size, self.hidden_dim), requires_grad=True)
+            state = Variable(torch.zeros(batch_size, self.hidden_dim), requires_grad=True)
 
         if self.use_gpu:
             return state.cuda()
