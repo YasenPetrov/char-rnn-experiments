@@ -231,7 +231,7 @@ def run_eval_session(eval_params, use_gpu=True):
         # For every configuration
         configuration_results = {
             'model': f"{eval_params['experiment_dir']} {eval_params['model_id']}",
-            'eval_file': '{eval_file}',
+            'eval_file': f'{eval_file}',
             'eval_chunk_size': eval_chunk_size,
             'max_num_chunks': max_num_chunks,
             'mode': mode,
