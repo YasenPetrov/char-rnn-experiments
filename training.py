@@ -64,11 +64,11 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
     # Record rolling mean and variance times for batches
     total_batches_processed, mean_batch_time, batch_time_m2 = start_batches, 0, 0
 
-    # Make sure that the timesteps between resettings of the hidden state are a multiple of the batch size and n tsteps
-    if not hidden_state_reset_steps % (batch_size * num_timesteps) == 0:
-        logger.warn(f'Num timesteps to reset {hidden_state_reset_steps} is not a multiple of batch size {batch_size} '
+    # Make sure that the timesteps between resettings of the hidden state are a multiple of the number of timesteps
+    if not hidden_state_reset_steps % num_timesteps == 0:
+        logger.warn(f'Num timesteps to reset {hidden_state_reset_steps} is not a multiple of the '
                     f'times number of timesteps {num_timesteps}. This will be changed')
-        hidden_state_reset_steps -= hidden_state_reset_steps % (batch_size * num_timesteps)
+        hidden_state_reset_steps -= hidden_state_reset_steps % num_timesteps
 
     train_start_time = time.time() - start_time_sec
 
@@ -78,7 +78,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 
     for epoch_number in range(start_epoch, num_epochs):
         # We want to start traversing the text from the beginning - get a fresh batch generator
-        batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps, reset_steps=hidden_state_reset_steps)
+        batch_iterator = data_train.get_batch_iterator(batch_size, num_timesteps)
         for inputs, targets in batch_iterator:
             batch_start_time = time.time()
 
