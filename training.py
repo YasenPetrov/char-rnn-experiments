@@ -90,7 +90,7 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
                 targets = Variable(torch.LongTensor(targets))
 
             # Reset the gradiens in prep for a new step
-            model.zero_grad()
+            model.zero_grad() 
 
 
             # We reset the hidden state every so often. When we do not want to do that we still need to repackage the
@@ -219,12 +219,17 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 
 
 def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=False, learning_rate=0,
-                 record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False):
+                 record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False, initial_hidden=None):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
+
     # We want a batch size of 1 so we can pass through the text sequentially
-    model.hidden = model.init_hidden(batch_size=1)
+    if initial_hidden is None:
+        model.hidden = model.init_hidden(batch_size=1)
+    else:
+        model.hidden = (Variable(initial_hidden[0].data.mean(1).view(model.num_layers, 1, model.hidden_dim)),
+                        Variable(initial_hidden[1].data.mean(1).view(model.num_layers, 1, model.hidden_dim)))
 
     # Get a fresh iterator, so we can make a pass through the whole text
     # TODO: Make sure we iterate through whole file when validating
@@ -297,3 +302,46 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
         return chars_processed, LOG_2E * (tot_loss / chars_processed), stats
 
     return chars_processed, LOG_2E * (tot_loss / chars_processed)
+
+
+def evaluate_rnn_sentences(model, valid_data, initial_hidden, batch_size, num_timesteps, pad_input, loss_function,
+                       use_gpu, max_chars=np.inf, dynamic=False, learning_rate=0.1, decay_coef=0):
+    tot_val_loss = 0
+    val_chars_processed = 0
+    val_loss_history = []
+
+    if dynamic:
+        original_weigths = [copy.deepcopy(p.data) for p in model.parameters()]
+
+    for inputs, targets in valid_data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps,
+                                                         pad_input=pad_input, max_chars_per_file=max_chars):
+        model.hidden = (Variable(initial_hidden[0].data.mean(1).view(model.num_layers, 1, model.hidden_dim)),
+                        Variable(initial_hidden[1].data.mean(1).view(model.num_layers, 1, model.hidden_dim)))
+
+        if use_gpu:
+            inputs = Variable(torch.Tensor(inputs)).cuda()
+            targets = Variable(torch.LongTensor(targets)).cuda()
+        else:
+            inputs = Variable(torch.Tensor(inputs))
+            targets = Variable(torch.LongTensor(targets))
+
+        # Forward pass through a batch of sequences - the result is <batch_size x num_timesteps x alphabet_size> -
+        # the outputs for each sequence in the batch, at every timestep in the sequence
+        logits = model(inputs)
+
+        loss = loss_function(logits.contiguous().view(-1, logits.data.shape[-1]), targets.contiguous().view(-1))
+
+        if dynamic:
+            # Backward pass - compute gradients, propagate gradient information back through the network
+            loss.backward()
+
+            # SGD with global prior update
+            for p, o in zip(model.parameters(), original_weigths):
+                p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
+
+        val_loss_history.append(loss.data[0])
+        tot_val_loss += loss.data[0] * inputs.shape[1]
+        val_chars_processed += inputs.shape[1]
+
+    val_loss = tot_val_loss / val_chars_processed
+    return LOG_2E * val_loss, val_loss_history

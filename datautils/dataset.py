@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import numpy as np
 # from lmexperiments.config import PROJECT_HOME
 
@@ -34,18 +35,23 @@ class TextFile:
             text = fp.read()
         return text
 
-    def get_iterator(self, max_chunk_size=int(1e6)):
+    def get_iterator(self, max_chunk_size=int(1e6), max_chars=np.inf):
         """
             Returns a generator object that iterates over a large file in chunks
             :param filename: Path to the text file
             :param max_chunk_size: Maximum number of chars to be read in at a time
+            :param max_chars: Maximum number of chars to be returned in total
+
             :return: A generator object
             """
+        chars_left = max_chars
         with open(self.filename, 'r', encoding=self.encoding) as fp:
-            chunk = fp.read(max_chunk_size)
-            while chunk:
+            chunk = fp.read(min(max_chunk_size, chars_left))
+            while chunk and chars_left > 0:
+                chunk = chunk[:min(len(chunk), chars_left)]
+                chars_left -= len(chunk)
                 yield chunk
-                chunk = fp.read(max_chunk_size)
+                chunk = fp.read(min(max_chunk_size, chars_left))
 
 
 class Alphabet:
@@ -224,3 +230,43 @@ class Dataset:
             last_chunk_last_id = ids[-1]
 
 
+class SentenceDataset:
+    def __init__(self, files_list, alphabet, memory_limit_bytes=_MEMORY_LIMIT_BYTES):
+        self.alphabet = alphabet
+        self.files_list = files_list
+        self.memory_limit_bytes = memory_limit_bytes
+
+    def get_batch_iterator(self, batch_size, num_timesteps, separator=r'[\.\?!]\s+', remove_unknown_tokens=False,
+                           pad_input=False, max_chars_per_file=np.inf):
+
+        for file in self.files_list:
+            textfile = TextFile(file)
+            for chunk in textfile.get_iterator(max_chars=max_chars_per_file):
+                # Get the string sequences we are interested in (get one more character if we are not padding)
+                seqs = [chunk[m.end(0): m.end(0) + num_timesteps + int(not pad_input)] for m in
+                        re.finditer(separator, chunk)]
+
+                # Chances are the last sequence will be of odd length -- remove it if it is
+                while not len(seqs[-1]) == num_timesteps + int(not pad_input):
+                    seqs = seqs[:-1]
+
+                # Make sure the number of seqs is a multiple of the batch_size
+                remainder = len(seqs) % batch_size
+                seqs = seqs[:len(seqs) - remainder]
+
+                seqs = [self.alphabet.string_to_ids(s, remove_unknown=False) for s in seqs]
+
+                if pad_input:
+                    inputs = np.array(
+                        [to_categorical(s, self.alphabet.get_size(), add_padding=pad_input) for s in seqs])
+                    targets = np.array(seqs)
+                else:
+                    inputs = np.array(
+                        [to_categorical(s[:-1], self.alphabet.get_size(), add_padding=pad_input) for s in seqs])
+                    targets = np.array([s[1:] for s in seqs])
+
+                batch_start = 0
+                # Loop over whole chunk, yield batches
+                while batch_start + batch_size <= inputs.shape[0]:
+                    yield inputs[batch_start: batch_start + batch_size], targets[batch_start:batch_start + batch_size]
+                    batch_start += batch_size

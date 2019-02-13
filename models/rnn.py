@@ -40,27 +40,27 @@ class BasicRnn(nn.Module):
         elif self.network_type == 'gru':
             return nn.GRU(**kwargs)
 
-    def init_hidden(self, batch_size=None, init_values=None):
+    def init_hidden(self, batch_size=None, init_values=None, requires_grad=False):
         if self.network_type == 'lstm':
             if init_values is not None:
-                states = (Variable(init_values[0], requires_grad=False),
-                          Variable(init_values[1], requires_grad=False))
+                states = (Variable(init_values[0], requires_grad=requires_grad),
+                          Variable(init_values[1], requires_grad=requires_grad))
             else:
                 if batch_size is None:
                     batch_size = self.batch_size
-                states = (Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=False),
-                          Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=False))
+                states = (Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=requires_grad),
+                          Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=requires_grad))
             if self.use_gpu:
                 return tuple(s.cuda() for s in states)
             else:
                 return states
         else:   # GRU of Vanilla RNN - only one hidden state
             if init_values is not None:
-                state = Variable(init_values, requires_grad=False)
+                state = Variable(init_values, requires_grad=requires_grad)
             else:
                 if batch_size is None:
                     batch_size = self.batch_size
-                state = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=False)
+                state = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_dim), requires_grad=requires_grad)
 
             if self.use_gpu:
                 return state.cuda()
