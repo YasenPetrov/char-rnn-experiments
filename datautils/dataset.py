@@ -162,7 +162,7 @@ class Dataset:
         self._targets_data = None
         self.memory_limit_bytes = memory_limit_bytes
 
-    def get_batch_iterator(self, batch_size, num_timesteps, remove_unknown_tokens=False):
+    def get_batch_iterator(self, batch_size, num_timesteps, remove_unknown_tokens=False, num_chars_to_read=np.inf):
         # TODO: Support for output in the form (num_timesteps x num_batches x alphabet_size)
         # Decide on an appropriate chunk size for reading text we will be reading
         max_chars = self.memory_limit_bytes // (8 * self.alphabet.get_size())
@@ -185,7 +185,7 @@ class Dataset:
         last_chunk_last_id = _ID_PAD
 
         # Iterate over chunks of the file
-        for chunk in self._textfile.get_iterator(max_chunk_size):
+        for chunk in self._textfile.get_iterator(max_chunk_size, max_chars=num_chars_to_read):
             # Turn chunk into list of ids
             ids = self.alphabet.string_to_ids(chunk, remove_unknown=remove_unknown_tokens)
 

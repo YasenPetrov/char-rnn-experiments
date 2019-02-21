@@ -5,6 +5,7 @@ import shutil
 import time
 import copy
 
+import numpy as np
 import torch
 from torch import nn
 import pandas as pd
@@ -12,10 +13,10 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from config import EXPERIMENT_DIR, DEFAULT_MEMORY_LIMIT_BYTES
+from config import EXPERIMENT_DIR, DEFAULT_MEMORY_LIMIT_BYTES, EXPERIMENT_SPEC_FILENAME, DATA_DIR
 from datautils.dataset import Alphabet, Dataset
 from models.rnn import get_rnn_for_hyperparams
-from models.utils import RNN_Hyperparameters
+from models.utils import RNN_Hyperparameters, compute_gradient_rms
 from training import evaluate_rnn
 from log import get_logger
 from utils.general_utils import dict_of_lists_to_list_of_dicts
@@ -27,7 +28,16 @@ def evaluate(args):
     # Load best model from experiment
     experiment_folder = os.path.join(EXPERIMENT_DIR, args.experiment_name)
 
-    # Load spec file
+    # We expect to find a spec.json file in a folder with the same name as the experiment under the main experiment dir
+    experiment_folder = os.path.join(EXPERIMENT_DIR, args.experiment_name)
+    spec_filepath = os.path.join(experiment_folder, EXPERIMENT_SPEC_FILENAME)
+    with open(spec_filepath, 'r') as fp:
+        spec = json.load(fp)
+    # Check if data files exist
+    data_folder = os.path.join(DATA_DIR, spec['data_folder'])
+    train_filename = os.path.join(data_folder, 'train.txt')
+
+    # Load eval spec file
     eval_dir = os.path.join(experiment_folder, 'eval')
     spec_file = os.path.join(eval_dir, args.test_name + '.json')
     with open(spec_file, 'r') as fp:
@@ -48,6 +58,9 @@ def evaluate(args):
         alphabet_file = os.path.join(experiment_folder, 'alphabet.json')
 
         alphabet = Alphabet.from_json(alphabet_file)
+
+        # Get training data for RMS estimation
+        train_data = Dataset(train_filename, alphabet)
 
         with open(results_file, 'r') as fp:
             exp_results = json.load(fp)
@@ -71,6 +84,11 @@ def evaluate(args):
         if os.path.exists(eval_out_dir):
             shutil.rmtree(eval_out_dir)
 
+
+        # We can specify how much of the validation file to use -- if we haven't or we've spacified <0, use them all
+        if "eval_char_count" not in spec or spec["eval_char_count"][0] < 0:
+            spec["eval_char_count"] = [np.inf]
+
         # Make sure there is at most one static evaluation - hyperparams have no effect there
         if False in spec['dynamic']:
             spec['dynamic'] = [x for x in spec['dynamic'] if x]
@@ -80,7 +98,8 @@ def evaluate(args):
                                                            'num_timesteps': spec['stats_interval'],
                                                            'stats_interval': spec['stats_interval'],
                                                            'learning_rate': [None],
-                                                           'decay_coef': [None]})
+                                                           'decay_coef': [None],
+                                                           'eval_char_count': spec['eval_char_count']})
         else:
             hypers_list = dict_of_lists_to_list_of_dicts(spec)
 
@@ -91,12 +110,39 @@ def evaluate(args):
 
         total_time = 0
 
+        rms_grad_stats = dict()
         for i, hypers in enumerate(hypers_list):
+
+            logger.info(f'Evaluating for {i+1}|{len(hypers_list)}:\n{json.dumps(hypers, indent=2)}')
             data = Dataset(hypers['file'], alphabet, DEFAULT_MEMORY_LIMIT_BYTES)
 
             model.load_state_dict(checkpoint['state_dict'])
             if args.use_gpu:
                 model.cuda()
+
+            if "rms_global_prior" not in hypers:
+                hypers["rms_global_prior"] = False
+
+            if "dynamic_type" not in hypers:
+                hypers["dynamic_type"] = "sgd"
+
+            # If we've already estimated RMS grads for this setting, reuse them
+            if hypers['dynamic'] and hypers['dynamic_type'] == 'rms':
+                if hypers["rms_est_batch_size"] in rms_grad_stats and(hypers["num_timesteps"] in rms_grad_stats[hypers["rms_est_batch_size"]]):
+                    for p, rms in zip(model.parameters(),
+                                      rms_grad_stats[hypers["rms_est_batch_size"]][hypers["num_timesteps"]]):
+                        p.RMS = rms
+                else:
+                    # We want to estimate the RMS of the gradients on the same number of chars every time -- how many
+                    # batches do we need for the current batch size and num_timesteps
+                    max_batches = int(hypers["rms_est_train_size"] /
+                                      (hypers["rms_est_batch_size"] * hypers["num_timesteps"]))
+                    compute_gradient_rms(model, train_data, hypers["num_timesteps"], hypers["rms_est_batch_size"],
+                                         max_batches=max_batches, use_gpu=args.use_gpu)
+                    if not hypers["rms_est_batch_size"] in rms_grad_stats:
+                        rms_grad_stats[hypers["rms_est_batch_size"]] = dict()
+                    rms_grad_stats[hypers["rms_est_batch_size"]][hypers["num_timesteps"]] =\
+                        [p.RMS for p in model.parameters()]
 
             start = time.time()
             chars_processed, loss, losses = evaluate_rnn(model, data,
@@ -107,7 +153,10 @@ def evaluate(args):
                                                         stats_interval=hypers['stats_interval'],
                                                         record_stats=True,
                                                         learning_rate=hypers['learning_rate'],
-                                                        decay_coef=hypers['decay_coef'])
+                                                        decay_coef=hypers['decay_coef'],
+                                                        dynamic_rule=hypers["dynamic_type"],
+                                                        rms_global_prior=hypers["rms_global_prior"] or None,
+                                                        num_chars_to_read=hypers["eval_char_count"])
 
             if best_final_loss is None or loss < best_final_loss:
                 best_final_loss = loss

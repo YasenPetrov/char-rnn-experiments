@@ -219,7 +219,9 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 
 
 def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=False, learning_rate=0,
-                 record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False, initial_hidden=None):
+                 record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False,
+                 initial_hidden=None, logging_freq=int(1e4),
+                 dynamic_rule='sgd', rms_epsilon=2e-5, rms_global_prior=True, num_chars_to_read=np.inf):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -231,15 +233,22 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
         model.hidden = (Variable(initial_hidden[0].data.mean(1).view(model.num_layers, 1, model.hidden_dim)),
                         Variable(initial_hidden[1].data.mean(1).view(model.num_layers, 1, model.hidden_dim)))
 
+    # Compute RMS norm
+    if dynamic and dynamic_rule == 'rms' and rms_global_prior:
+        for param in model.parameters():
+            param.RMSNorm = param.RMS / torch.mean(param.RMS)
+
     # Get a fresh iterator, so we can make a pass through the whole text
     # TODO: Make sure we iterate through whole file when validating
     # TODO: Fix imprecision in loss calculation
     val_iterator = data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps,
-                                           remove_unknown_tokens=remove_unknown_tokens)
+                                           remove_unknown_tokens=remove_unknown_tokens,
+                                           num_chars_to_read=num_chars_to_read)
 
     # Keep track of the total loss, the number of batches we've processed and the time elapsed
     # The last batch might have a different number of timesteps - we need to take that into account when averaging, so
     # instead of counting batches, we count characters processed
+    loss_at_last_stats = 0
     tot_loss = 0
     chars_processed = 0
 
@@ -283,17 +292,30 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
             chars_since_last_stats += inputs.shape[1]
             if chars_since_last_stats >= stats_interval:
                 stats['chars_processed'].append(chars_processed)
-                stats['loss'].append(LOG_2E * tot_loss / chars_processed)
-                logger.info('Chars processed: {0}, Loss: {1}'.format(chars_processed, stats['loss'][-1]))
+                stats['loss'].append(LOG_2E * (tot_loss - loss_at_last_stats) / chars_since_last_stats)
+                if (chars_processed % logging_freq) == 0:
+                    logger.info('Chars processed: {0}, Loss: {1}'.format(chars_processed,
+                                                                         LOG_2E * tot_loss / chars_processed))
+
+                loss_at_last_stats = tot_loss
                 chars_since_last_stats = 0
 
         if dynamic:
             # Backward pass - compute gradients, propagate gradient information back through the network
             loss.backward()
 
-            # SGD with global prior update
             for p, o in zip(model.parameters(), original_weigths):
-                p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
+                if dynamic_rule == 'sgd':
+                    # SGD with global prior update
+                    p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
+                elif dynamic_rule == 'rms':
+                    decay_scalers = 1
+                    if rms_global_prior:
+                        decay_scalers = p.RMSNorm
+                    p.data += - learning_rate * p.grad.data / (p.RMS + rms_epsilon) + decay_coef * (
+                    o - p.data) * decay_scalers
+                else:
+                    raise ValueError(f'Invalid dynamic rule for evaluation: {dynamic_rule}')
 
     # Restore hidden state
     model.hidden = old_hidden
