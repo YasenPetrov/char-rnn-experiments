@@ -163,18 +163,20 @@ class StepRnnLhuc(StepRnn):
 
     def init_lhuc_scalers(self, batch_size=None, init_values=None):
         if init_values is not None:
-            state = Variable(init_values, requires_grad=True)
+            if self.use_gpu:
+                state = Variable(init_values.cuda(), requires_grad=True)
+            else:
+                state = Variable(init_values, requires_grad=True)
         else:
             if batch_size is None:
                 batch_size = self.batch_size
-            state = Variable(torch.zeros(batch_size, self.hidden_dim), requires_grad=True)
+            if self.use_gpu:
+                state = Variable(torch.zeros(batch_size, self.hidden_dim).cuda(), requires_grad=True)
+            else:
+                state = Variable(torch.zeros(batch_size, self.hidden_dim), requires_grad=True)
+        return state
 
-        if self.use_gpu:
-            return state.cuda()
-        else:
-            return state
-
-    def forward(self, inputs):
+    def forward(self, inputs, use_aug_in_recurrent=False):
         '''
         :param inputs: shape is num_timesteps X batch_size X alphabet_size
         :return:
@@ -184,13 +186,70 @@ class StepRnnLhuc(StepRnn):
             self.hidden = self.rnn_cell(inputs[:, timestep, :], self.hidden)
             # Scale with a(scalers), where a is sigmoid with amplitude 2 in this case
             if self.network_type == 'lstm':
-                hidden_lhuc = self.hidden[0] *self.lhuc_nonlinearity(self.lhuc_scalers)
+                hidden_lhuc = self.hidden[0] * self.lhuc_nonlinearity(self.lhuc_scalers)
+                if use_aug_in_recurrent:
+                    self.hidden = (hidden_lhuc, self.hidden[1])
             else:
                 hidden_lhuc = self.hidden * self.lhuc_nonlinearity(self.lhuc_scalers)
+                if use_aug_in_recurrent:
+                    self.hidden = hidden_lhuc
             out = self.hidden2out(hidden_lhuc)
             rnn_out.append(out)
 
         return torch.stack(rnn_out, 1)
+
+
+class StepRnnSparseDynamic(StepRnn):
+    def __init__(self, *args, **kwargs):
+        super(StepRnnSparseDynamic, self).__init__(*args, **kwargs)
+        self.M = self.init_M()
+        # Make sure we can get the grad w.r.t. the scalers
+        self.M.retain_grad()
+        self.sig = nn.Sigmoid()
+        self.lhuc_nonlinearity = lambda x: 2 * self.sig(x)
+
+    def init_M(self, batch_size=None, init_values=None):
+        if init_values is not None:
+            if self.use_gpu:
+                state = Variable(init_values.cuda(), requires_grad=True)
+            else:
+                state = Variable(init_values, requires_grad=True)
+        else:
+            if batch_size is None:
+                batch_size = self.batch_size
+            if self.use_gpu:
+                state = Variable(torch.zeros(batch_size, self.hidden_dim, self.hidden_dim).cuda(), requires_grad=True)
+            else:
+                state = Variable(torch.zeros(batch_size, self.hidden_dim, self.hidden_dim), requires_grad=True)
+
+        return state
+
+    def forward(self, inputs, use_aug_in_recurrent=False):
+        '''
+        :param inputs: shape is batch_size X num_timesteps X alphabet_size
+        :param use_aug_in_recurrent: Whether to use the augmented version of the hidden state in the recurrent comp.
+        :return:
+        '''
+        rnn_out = []
+        for timestep in range(inputs.size(1)):
+            self.hidden = self.rnn_cell(inputs[:, timestep, :], self.hidden)
+            # h'_t = h_t + M h_t
+            if self.network_type == 'lstm':
+                hidden_aug = self.hidden[0] + self.hidden[0] * torch.matmul(self.M,
+                                                                            self.hidden[0].view(-1, self.hidden_dim, 1)
+                                                                           ).view(-1, self.hidden_dim)
+                if use_aug_in_recurrent:
+                    self.hidden = (hidden_aug, self.hidden[1])
+            else:
+                hidden_aug = self.hidden + self.hidden * torch.matmul(self.M, self.hidden.view(-1, self.hidden_dim, 1)
+                                                                     ).view(-1, self.hidden_dim)
+                if use_aug_in_recurrent:
+                    self.hidden = hidden_aug
+            out = self.hidden2out(hidden_aug)
+            rnn_out.append(out)
+
+        return torch.stack(rnn_out, 1)
+
 
 class RNN_LM(BasicRnn):
     def __init__(self, *args, **kwargs):
@@ -203,3 +262,26 @@ def get_rnn_for_hyperparams(hyperparams, alphabet_size, use_gpu):
                    hyperparams.linear_dropout)
     model.rnn.flatten_parameters()
     return model
+
+def get_step_rnn_for_rnn(model, step_model_type):
+    if step_model_type == 'lhuc':
+        model_step = StepRnnLhuc(model.hidden_dim, model.alphabet_size, model.batch_size,
+                                 network_type=model.network_type,
+                                 use_gpu=model.use_gpu)
+    elif step_model_type == 'sparse':
+        model_step = StepRnnSparseDynamic(model.hidden_dim, model.alphabet_size, model.batch_size,
+                                          network_type=model.network_type, use_gpu=model.use_gpu)
+    elif step_model_type == 'basic':
+        model_step = StepRnn(model.hidden_dim, model.alphabet_size, model.batch_size, network_type=model.network_type,
+                             use_gpu=model.use_gpu)
+    else:
+        raise ValueError(f'Unknown step model type: {step_model_type}')
+
+    model_step.rnn_cell.weight_hh.data = model.rnn.weight_hh_l0.data
+    model_step.rnn_cell.weight_ih.data = model.rnn.weight_ih_l0.data
+    model_step.rnn_cell.bias_hh.data = model.rnn.bias_hh_l0.data
+    model_step.rnn_cell.bias_ih.data = model.rnn.bias_ih_l0.data
+    model_step.hidden2out.weight.data = model.hidden2out.weight.data
+    model_step.hidden2out.bias.data = model.hidden2out.bias.data
+
+    return model_step

@@ -16,7 +16,7 @@ from utils.logging import slack_logging
 
 from models.rnn import RNN_LM
 from datautils.dataset import Dataset
-from torch.optim import Optimizer
+from torch.optim import Optimizer, SGD
 
 LOG_2E = np.log2(np.e)
 
@@ -316,6 +316,99 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
                     o - p.data) * decay_scalers
                 else:
                     raise ValueError(f'Invalid dynamic rule for evaluation: {dynamic_rule}')
+
+    # Restore hidden state
+    model.hidden = old_hidden
+
+    if record_stats:
+        return chars_processed, LOG_2E * (tot_loss / chars_processed), stats
+
+    return chars_processed, LOG_2E * (tot_loss / chars_processed)
+
+
+def evaluate_rnn_lhuc_sparse(model, data, loss_function, num_timesteps, use_gpu, learning_rate=None,
+                 record_stats=False, stats_interval=None, remove_unknown_tokens=False, use_in_recurrent=False,
+                 initial_hidden=None, logging_freq=int(1e4), adapt_rule='lhuc', num_chars_to_read=np.inf,
+                             optimizer_fn=SGD):
+    # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
+    # and recover it at the end of evaluation
+    old_hidden = model.hidden
+
+    # We want a batch size of 1 so we can pass through the text sequentially
+    if initial_hidden is None:
+        model.hidden = model.init_hidden(batch_size=1)
+    else:
+        model.hidden = (Variable(initial_hidden[0].data.mean(1).view(model.num_layers, 1, model.hidden_dim)),
+                        Variable(initial_hidden[1].data.mean(1).view(model.num_layers, 1, model.hidden_dim)))
+
+    # Get a fresh iterator, so we can make a pass through the whole text
+    val_iterator = data.get_batch_iterator(batch_size=1, num_timesteps=num_timesteps,
+                                           remove_unknown_tokens=remove_unknown_tokens,
+                                           num_chars_to_read=num_chars_to_read)
+
+    # Keep track of the total loss, the number of batches we've processed and the time elapsed
+    # The last batch might have a different number of timesteps - we need to take that into account when averaging, so
+    # instead of counting batches, we count characters processed
+    loss_at_last_stats = 0
+    tot_loss = 0
+    chars_processed = 0
+
+    if record_stats:
+        stats = {'chars_processed': [], 'loss': []}
+        chars_since_last_stats = 0
+
+    if adapt_rule == 'lhuc':
+        model.lhuc_scalers = model.init_lhuc_scalers(batch_size=1)
+        model.lhuc_scalers.retain_grad()
+        optimizer = optimizer_fn([model.lhuc_scalers], lr=learning_rate)
+    elif adapt_rule == 'sparse':
+        model.M = model.init_M(batch_size=1)
+        model.M.retain_grad()
+        optimizer = optimizer_fn([model.M], lr=learning_rate)
+    else:
+        raise ValueError(f'Invalid adaptation rule: {adapt_rule}')
+
+    for inputs, targets in val_iterator:
+        # Make variables volatile - we will not backpropagate here unless we're doing dynamic evaluation
+        if use_gpu:
+            inputs = Variable(torch.Tensor(inputs)).cuda()
+            targets = Variable(torch.LongTensor(targets)).cuda()
+        else:
+            inputs = Variable(torch.Tensor(inputs))
+            targets = Variable(torch.LongTensor(targets))
+
+        # Repackage hidden
+        model.hidden = model.init_hidden(batch_size=None, init_values=model.get_hidden_data())
+
+        # Forward pass
+        logits = model(inputs, use_in_recurrent)
+
+        # Compute the loss on this batch
+        # We flatten the results and targets before calculating the loss(pyTorch requires 1D targets) - autograd takes
+        # care of backpropagating through the view() operation
+        loss = loss_function(logits.contiguous().view(-1, logits.data.shape[-1]), targets.contiguous().view(-1))
+
+        # Calculate average loss (see training function if confused by reshaping) and multiply by the number of
+        # timesteps to get the sum of losses for this batch
+        tot_loss += loss.data[0] * inputs.shape[1]
+        chars_processed += inputs.shape[1]
+
+        if record_stats:
+            chars_since_last_stats += inputs.shape[1]
+            if chars_since_last_stats >= stats_interval:
+                stats['chars_processed'].append(chars_processed)
+                stats['loss'].append(LOG_2E * (tot_loss - loss_at_last_stats) / chars_since_last_stats)
+                if (chars_processed % logging_freq) == 0:
+                    logger.info('Chars processed: {0}, Loss: {1}'.format(chars_processed,
+                                                                         LOG_2E * tot_loss / chars_processed))
+
+                loss_at_last_stats = tot_loss
+                chars_since_last_stats = 0
+
+        loss.backward()
+
+        optimizer.step()
+
 
     # Restore hidden state
     model.hidden = old_hidden
