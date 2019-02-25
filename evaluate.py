@@ -144,7 +144,7 @@ def evaluate_lhuc_or_sparse(args):
             results['total_time_min'] = total_time / 60
             json.dump(results, fp, indent=2)
 
-def evaluate(args):
+def evaluate(args, save_images=False):
     # Load best model from experiment
     experiment_folder = os.path.join(EXPERIMENT_DIR, args.experiment_name)
 
@@ -299,34 +299,36 @@ def evaluate(args):
             with open(os.path.join(out_dir, 'hyperparams.json'), 'w+') as fp:
                 json.dump(hypers, fp, indent=2)
 
+            if save_images:
+                # Plot losses and save image
+                plt.figure(figsize=(12, 8))
+                plt.grid()
+                plt.plot(losses.chars_processed, losses.loss)
+                plt.legend(fontsize=14)
+                plt.xlabel('Chars processed', fontsize=14)
+                plt.ylabel('BPC', fontsize=14)
+                hypers_str = str(hypers)
+                plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
+
+                img_path = os.path.join(out_dir, 'losses.png')
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                plt.savefig(img_path)
+
+        if save_images:
             # Plot losses and save image
             plt.figure(figsize=(12, 8))
             plt.grid()
-            plt.plot(losses.chars_processed, losses.loss)
+            for i, losses in loss_log.items():
+                plt.plot(losses.chars_processed, losses.loss, label=str(i))
             plt.legend(fontsize=14)
             plt.xlabel('Chars processed', fontsize=14)
             plt.ylabel('BPC', fontsize=14)
-            hypers_str = str(hypers)
-            plt.title(hypers_str[:len(hypers_str) // 2] + '\n' + hypers_str[len(hypers_str) // 2:], fontsize=10)
 
-            img_path = os.path.join(out_dir, 'losses.png')
+            img_path = os.path.join(eval_out_dir, 'losses.png')
             if os.path.exists(img_path):
                 os.remove(img_path)
             plt.savefig(img_path)
-
-        # Plot losses and save image
-        plt.figure(figsize=(12, 8))
-        plt.grid()
-        for i, losses in loss_log.items():
-            plt.plot(losses.chars_processed, losses.loss, label=str(i))
-        plt.legend(fontsize=14)
-        plt.xlabel('Chars processed', fontsize=14)
-        plt.ylabel('BPC', fontsize=14)
-
-        img_path = os.path.join(eval_out_dir, 'losses.png')
-        if os.path.exists(img_path):
-            os.remove(img_path)
-        plt.savefig(img_path)
 
         with open(os.path.join(eval_out_dir, 'results.json'), 'w+') as fp:
             results['best_key'] = best_id
