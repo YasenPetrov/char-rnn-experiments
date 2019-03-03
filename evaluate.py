@@ -137,7 +137,6 @@ def evaluate_lhuc_or_sparse(args):
             with open(os.path.join(out_dir, 'hyperparams.json'), 'w+') as fp:
                 json.dump(hypers, fp, indent=2)
 
-
         # Save results for model ID
         with open(os.path.join(eval_out_dir, 'results.json'), 'w+') as fp:
             results['best_key'] = best_id
@@ -315,6 +314,12 @@ def evaluate(args, save_images=False):
                     os.remove(img_path)
                 plt.savefig(img_path)
 
+            if args.save_model:
+                if hypers['dynamic']:
+                    torch.save(model, os.path.join(out_dir, 'model.pth'))
+                    if hypers['dynamic_type'] == 'rms':
+                        torch.save([p.RMS for p in model.parameters()], os.path.join(out_dir, 'rms.pth'))
+
         if save_images:
             # Plot losses and save image
             plt.figure(figsize=(12, 8))
@@ -329,6 +334,7 @@ def evaluate(args, save_images=False):
             if os.path.exists(img_path):
                 os.remove(img_path)
             plt.savefig(img_path)
+
 
         with open(os.path.join(eval_out_dir, 'results.json'), 'w+') as fp:
             results['best_key'] = best_id
@@ -346,6 +352,8 @@ if __name__ == '__main__':
                         help='Path to a UTF-8 encoded file for the model to be evaluated against')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
                         help='If set, evaluation is performed on a GPU, if available')
+    parser.add_argument('--save-model', dest='save_model', action='store_const', default=False, const=True,
+                        help='If set, the model at the end of dynamic evaluation is stored')
     parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
     parser.add_argument('--lhuc-sparse', dest='lhuc_sparse', action='store_const', default=False, const=True,
                         help='If set, evaluation is performed with LHUC of sparse dynamic evaluation')
@@ -358,14 +366,3 @@ if __name__ == '__main__':
         evaluate_lhuc_or_sparse(args)
     else:
         evaluate(args)
-    # eval_start = time.time()
-    # chars_processed, loss = evaluate(args)
-    # eval_end = time.time()
-    # seconds_elapsed = eval_end - eval_start
-    # m, s = divmod(int(seconds_elapsed), 60)
-    # h, m = divmod(m, 60)
-    #
-    # logger.info('Finished evaluation in {h:02d}:{m:02d}:{s:02d}'.format(h=h, m=m, s=s))
-    # logger.info('Processed {0} chars, ~{1:.2f} per sec, Resulting BPC: {2:.5f}'.format(chars_processed,
-    #                                                                                    chars_processed / seconds_elapsed,
-    #                                                                                    loss))
