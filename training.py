@@ -237,6 +237,9 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     if dynamic and dynamic_rule == 'rms' and rms_global_prior:
         for param in model.parameters():
             param.RMSNorm = param.RMS / torch.mean(param.RMS)
+        if not decay_coef == 0:
+            # clip the RMSnorm to 1/decay_coef in order to not have the decay_coef exceed 1
+            param.RMSNorm = torch.clamp(param.RMSNorm, min=-np.inf, max=1.0 / decay_coef)
 
     # Get a fresh iterator, so we can make a pass through the whole text
     # TODO: Make sure we iterate through whole file when validating
