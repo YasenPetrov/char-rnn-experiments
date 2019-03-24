@@ -30,9 +30,12 @@ class TextFile:
     def get_size_in_bytes(self):
         return os.path.getsize(self.filename)
 
-    def read_whole_file(self):
-        with open(self.filename, 'r') as fp:
-            text = fp.read()
+    def read_whole_file(self, max_chars=None):
+        with open(self.filename, 'r', encoding=self.encoding) as fp:
+            if max_chars is None or max_chars < 0 or max_chars == np.inf:
+                text = fp.read()
+            else:
+                text = fp.read(max_chars)
         return text
 
     def get_iterator(self, max_chunk_size=int(1e6), max_chars=np.inf):
@@ -52,6 +55,102 @@ class TextFile:
                 chars_left -= len(chunk)
                 yield chunk
                 chunk = fp.read(min(max_chunk_size, chars_left))
+
+
+class BunchOfFiles:
+    def __init__(self, filenames, alphabet, max_lengths=None, sampling_weights=None):
+        for f in filenames:
+            if not os.path.exists(f):
+                raise FileNotFoundError(f'{f}')
+
+        self.filenames = filenames
+        self.alphabet = alphabet
+        self.max_lengths = max_lengths
+        self.sampling_weights = sampling_weights
+
+        if self.max_lengths is None:
+            self.max_lengths = [np.inf for _ in filenames]
+        if self.sampling_weights is None:
+            self.sampling_weights = [1 for _ in self.filenames]
+
+        self.texts = self._read_files()
+
+    def _read_files(self):
+        texts = []
+        for f, max_chars in zip(self.filenames, self.max_lengths):
+            textfile = TextFile(f)
+            texts.append(textfile.read_whole_file(max_chars))
+        return texts
+
+    def get_batch_iterator(self, batch_size, seq_length, separator=r'[\.\?!]\s+', remove_overlapping=True,
+                           shuffle_sequences=False, max_chars=np.inf, pad_input=True):
+
+        # Matp from text index to array of starts and a counter for how many sequences have been used
+        # We need the latter so that we do not repeat sequences in our evaluation set
+        sequence_map = [dict() for _ in range(len(self.texts))]
+        for i, text in enumerate(self.texts):
+            #Get the indices where sentences start
+            sent_starts = [m.end() for m in re.finditer(separator, text) if m.end() + seq_length <= len(text)]
+
+            if remove_overlapping and len(sent_starts):
+                # We do not want overlapping sequences -- remove sentence starts that fall within the previous sequence
+                s = [sent_starts[0]]
+                last_start = s[0]
+                for start in sent_starts[1:]:
+                    if start > last_start + seq_length:
+                        s.append(start)
+                        last_start = start
+                sent_starts = s
+
+            if shuffle_sequences:
+                np.random.shuffle(sent_starts)
+
+            sequence_map[i]['sent_starts'] = sent_starts
+            sequence_map[i]['sentences_used'] = 0
+
+        # Fill with tuples of (text_index, sentence_start)
+        text_start_tuples = []
+
+        text_pool_indices = list(range(len(self.texts)))
+        sampling_weights = np.array([w for w in self.sampling_weights], dtype='float')
+        sampling_weights /= sampling_weights.sum()
+
+        while len(text_start_tuples) * seq_length < max_chars and len(text_pool_indices) > 0:
+            # Sample text index
+            text_ix = np.random.choice(text_pool_indices, p=sampling_weights)
+            # If text out of sequences, remove that text's index from the pool of texts and move on
+            if sequence_map[text_ix]['sentences_used'] >= len(sequence_map[text_ix]['sent_starts']):
+                ix_to_remove = text_pool_indices.index(text_ix)
+                text_pool_indices.remove(text_ix)
+                sampling_weights = np.delete(sampling_weights, ix_to_remove)
+                sampling_weights /= sampling_weights.sum()
+                continue
+            # Get the next sequence from that text
+            next_seq_start = sequence_map[text_ix]['sent_starts'][sequence_map[text_ix]['sentences_used']]
+            sequence_map[text_ix]['sentences_used'] += 1
+            text_start_tuples.append((text_ix, next_seq_start))
+
+        # Make sure the number of seqs is a multiple of the batch_size
+        seqs =[self.texts[ti][start: start + seq_length] for ti, start in text_pool_indices]
+        remainder = len(seqs) % batch_size
+        seqs = seqs[:len(seqs) - remainder]
+
+        seqs = [self.alphabet.string_to_ids(s, remove_unknown=False) for s in seqs]
+
+        if pad_input:
+            inputs = np.array(
+                [to_categorical(s, self.alphabet.get_size(), add_padding=pad_input) for s in seqs])
+            targets = np.array(seqs)
+        else:
+            inputs = np.array(
+                [to_categorical(s[:-1], self.alphabet.get_size(), add_padding=pad_input) for s in seqs])
+            targets = np.array([s[1:] for s in seqs])
+
+        batch_start = 0
+        # Loop over whole chunk, yield batches
+        while batch_start + batch_size <= inputs.shape[0]:
+            yield inputs[batch_start: batch_start + batch_size], targets[batch_start:batch_start + batch_size]
+            batch_start += batch_size
 
 
 class Alphabet:
