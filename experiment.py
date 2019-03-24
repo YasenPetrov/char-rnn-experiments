@@ -21,6 +21,7 @@ from utils.torch_utils import get_optimizer, get_number_of_params, load_checkpoi
 from log import get_logger
 from config import DEFAULT_MEMORY_LIMIT_BYTES
 from utils.logging import slack_logging
+from utils.debugging import apply_hooks
 
 logger = get_logger(__name__)
 
@@ -78,6 +79,10 @@ def perform_experiment(args):
                     hyperparams.hidden_size = alphabet.get_size()
 
                 model = get_rnn_for_hyperparams(hyperparams, alphabet.get_size(), args.use_gpu)
+
+                # Register debugging hooks to detect nan gradients
+                if args.debug:
+                    apply_hooks(model)
 
                 # Create optimizer object
                 optimizer_spec = hyperparams.optimizer
@@ -290,6 +295,8 @@ if __name__ == '__main__':
     parser.add_argument('experiment_name', metavar='experiment_name', type=str, help='The name of the experiment')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
                         help='If set, training is performed on a GPU, if available')
+    parser.add_argument('--debug', dest='debug', action='store_const', default=False, const=True,
+                        help='If set, debugging hooks are attached to the module and check for NaN gradients')
     parser.add_argument('--resume', dest='resume', action='store_const', default=False, const=True,
                         help='If set, training is continued for the specified sets of hyperparams and numbers of' +
                              'epochs specified in resume_spec.json in the experiment folder')

@@ -20,6 +20,7 @@ from models.utils import RNN_Hyperparameters, compute_gradient_rms
 from training import evaluate_rnn, evaluate_rnn_lhuc_sparse
 from log import get_logger
 from utils.general_utils import dict_of_lists_to_list_of_dicts
+from utils.debugging import apply_hooks
 
 logger = get_logger(__name__)
 
@@ -100,6 +101,10 @@ def evaluate_lhuc_or_sparse(args):
             model = get_rnn_for_hyperparams(hyperparams, alphabet.get_size(), args.use_gpu)
             model.load_state_dict(checkpoint['state_dict'])
             model = get_step_rnn_for_rnn(model, step_model_type=hypers['adapt_rule'])
+
+            # Register debugging hooks to detect nan gradients
+            if args.debug:
+                apply_hooks(model)
 
             if args.use_gpu:
                 model.cuda()
@@ -191,6 +196,10 @@ def evaluate(args, save_images=False):
         logger.info('Evaluating model with results:\n{hps}'.format(hps=json.dumps(exp_results[str(model_key)], indent=2)))
 
         model = get_rnn_for_hyperparams(hyperparams, alphabet.get_size(), args.use_gpu)
+
+        # Register debugging hooks to detect nan gradients
+        if args.debug:
+            apply_hooks(model)
 
         checkpoint = torch.load(checkpoint_path)
         model.load_state_dict(checkpoint['state_dict'])
@@ -352,6 +361,8 @@ if __name__ == '__main__':
                         help='Path to a UTF-8 encoded file for the model to be evaluated against')
     parser.add_argument('--gpu', dest='use_gpu', action='store_const', default=False, const=True,
                         help='If set, evaluation is performed on a GPU, if available')
+    parser.add_argument('--debug', dest='debug', action='store_const', default=False, const=True,
+                        help='If set, debugging hooks are attached to the module and check for NaN gradients')
     parser.add_argument('--save-model', dest='save_model', action='store_const', default=False, const=True,
                         help='If set, the model at the end of dynamic evaluation is stored')
     parser.add_argument('--gpu_id', default='0', type=str, help='id for CUDA_VISIBLE_DEVICES')
