@@ -200,8 +200,12 @@ class StepRnnLhuc(StepRnn):
 
 
 class StepRnnSparseDynamic(StepRnn):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, m_size=None, *args, **kwargs):
         super(StepRnnSparseDynamic, self).__init__(*args, **kwargs)
+        self.m_size = m_size
+        if self.m_size is None or self.m_size < 0:
+            # By default, adapt all units
+            self.m_size = self.hidden_dim
         self.M = self.init_M()
         # Make sure we can get the grad w.r.t. the scalers
         self.M.retain_grad()
@@ -218,9 +222,9 @@ class StepRnnSparseDynamic(StepRnn):
             if batch_size is None:
                 batch_size = self.batch_size
             if self.use_gpu:
-                state = Variable(torch.zeros(batch_size, self.hidden_dim, self.hidden_dim).cuda(), requires_grad=True)
+                state = Variable(torch.zeros(batch_size, self.m_size, self.m_size).cuda(), requires_grad=True)
             else:
-                state = Variable(torch.zeros(batch_size, self.hidden_dim, self.hidden_dim), requires_grad=True)
+                state = Variable(torch.zeros(batch_size, self.m_size, self.m_size), requires_grad=True)
 
         return state
 
@@ -235,14 +239,27 @@ class StepRnnSparseDynamic(StepRnn):
             self.hidden = self.rnn_cell(inputs[:, timestep, :], self.hidden)
             # h'_t = h_t + M h_t
             if self.network_type == 'lstm':
-                hidden_aug = self.hidden[0] + self.hidden[0] * torch.matmul(self.M,
-                                                                            self.hidden[0].view(-1, self.hidden_dim, 1)
-                                                                           ).view(-1, self.hidden_dim)
+                if self.m_size == self.hidden_dim:
+                    hidden_aug = self.hidden[0] + torch.bmm(self.M, self.hidden[0].view(-1, self.hidden_dim, 1)
+                                                            ).view(-1, self.hidden_dim)
+                else:
+                    aug_part = self.hidden[0][:, :self.m_size] + \
+                               torch.bmm(self.M, self.hidden[0][:, :self.m_size].view(-1, self.m_size, 1)
+                                                            ).view(-1, self.m_size)
+                    hidden_aug = torch.cat((aug_part, self.hidden[0][:, self.m_size:]), dim=1)
+
                 if use_aug_in_recurrent:
                     self.hidden = (hidden_aug, self.hidden[1])
             else:
-                hidden_aug = self.hidden + self.hidden * torch.matmul(self.M, self.hidden.view(-1, self.hidden_dim, 1)
-                                                                     ).view(-1, self.hidden_dim)
+                if self.m_size == self.hidden_dim:
+                    hidden_aug = self.hidden + torch.bmm(self.M, self.hidden.view(-1, self.hidden_dim, 1)
+                                                            ).view(-1, self.hidden_dim)
+                else:
+                    aug_part = self.hidden[:, :self.m_size] + \
+                               torch.bmm(self.M, self.hidden[:, :self.m_size].view(-1, self.m_size, 1)
+                                         ).view(-1, self.m_size)
+                    hidden_aug = torch.cat((aug_part, self.hidden[:, self.m_size:]), dim=1)
+
                 if use_aug_in_recurrent:
                     self.hidden = hidden_aug
             out = self.hidden2out(hidden_aug)
@@ -263,14 +280,19 @@ def get_rnn_for_hyperparams(hyperparams, alphabet_size, use_gpu):
     model.rnn.flatten_parameters()
     return model
 
-def get_step_rnn_for_rnn(model, step_model_type):
+def get_step_rnn_for_rnn(model, hypers):
+    step_model_type = hypers['adapt_rule']
     if step_model_type == 'lhuc':
         model_step = StepRnnLhuc(model.hidden_dim, model.alphabet_size, model.batch_size,
                                  network_type=model.network_type,
                                  use_gpu=model.use_gpu)
     elif step_model_type == 'sparse':
-        model_step = StepRnnSparseDynamic(model.hidden_dim, model.alphabet_size, model.batch_size,
-                                          network_type=model.network_type, use_gpu=model.use_gpu)
+        m_size = None
+        if 'm_size' in hypers:
+            m_size = hypers['m_size']
+        model_step = StepRnnSparseDynamic(m_size=m_size, hidden_dim=model.hidden_dim, alphabet_size=model.alphabet_size,
+                                          batch_size=model.batch_size, network_type=model.network_type,
+                                          use_gpu=model.use_gpu)
     elif step_model_type == 'basic':
         model_step = StepRnn(model.hidden_dim, model.alphabet_size, model.batch_size, network_type=model.network_type,
                              use_gpu=model.use_gpu)

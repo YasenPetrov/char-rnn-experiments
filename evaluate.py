@@ -100,7 +100,7 @@ def evaluate_lhuc_or_sparse(args):
 
             model = get_rnn_for_hyperparams(hyperparams, alphabet.get_size(), args.use_gpu)
             model.load_state_dict(checkpoint['state_dict'])
-            model = get_step_rnn_for_rnn(model, step_model_type=hypers['adapt_rule'])
+            model = get_step_rnn_for_rnn(model, hypers=hypers)
 
             # Register debugging hooks to detect nan gradients
             if args.debug:
