@@ -314,6 +314,9 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
                 if dynamic_rule == 'sgd':
                     # SGD with global prior update
                     p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
+                elif dynamic_rule == 'sgd_pen':
+                    # SGD with global prior update
+                    p.data += - learning_rate * (p.grad.data + decay_coef * (o - p.data))
                 elif dynamic_rule == 'rms':
                     # RMS with (potentially an RMS) global prior update
                     decay_scalers = 1
