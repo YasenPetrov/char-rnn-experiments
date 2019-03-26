@@ -341,7 +341,7 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
 def evaluate_rnn_lhuc_sparse(model, data, loss_function, num_timesteps, use_gpu, learning_rate=None,
                  record_stats=False, stats_interval=None, remove_unknown_tokens=False, use_in_recurrent=False,
                  initial_hidden=None, logging_freq=int(1e4), adapt_rule='lhuc', num_chars_to_read=np.inf,
-                             optimizer_fn=SGD):
+                             optimizer_fn=SGD, weight_decay=0):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -372,11 +372,11 @@ def evaluate_rnn_lhuc_sparse(model, data, loss_function, num_timesteps, use_gpu,
     if adapt_rule == 'lhuc':
         model.lhuc_scalers = model.init_lhuc_scalers(batch_size=1)
         model.lhuc_scalers.retain_grad()
-        optimizer = optimizer_fn([model.lhuc_scalers], lr=learning_rate)
+        optimizer = optimizer_fn([model.lhuc_scalers], lr=learning_rate, weight_decay=weight_decay)
     elif adapt_rule == 'sparse':
         model.M = model.init_M(batch_size=1)
         model.M.retain_grad()
-        optimizer = optimizer_fn([model.M], lr=learning_rate)
+        optimizer = optimizer_fn([model.M], lr=learning_rate, weight_decay=weight_decay)
     else:
         raise ValueError(f'Invalid adaptation rule: {adapt_rule}')
 

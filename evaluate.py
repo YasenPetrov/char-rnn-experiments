@@ -79,9 +79,13 @@ def evaluate_lhuc_or_sparse(args):
         if os.path.exists(eval_out_dir):
             shutil.rmtree(eval_out_dir)
 
-        # We can specify how much of the validation file to use -- if we haven't or we've spacified <0, use them all
+        # We can specify how much of the validation file to use -- if we haven't or we've specified <0, use them all
         if "eval_char_count" not in spec or spec["eval_char_count"][0] < 0:
             spec["eval_char_count"] = [np.inf]
+
+        # L2 penalty for optimizer -- if not specified, leave at 0
+        if 'weight_decay' not in spec:
+            spec['weight_decay'] = [0]
 
         hypers_list = dict_of_lists_to_list_of_dicts(spec)
 
@@ -119,7 +123,8 @@ def evaluate_lhuc_or_sparse(args):
                                                                      learning_rate=hypers['learning_rate'],
                                                                      num_chars_to_read=hypers["eval_char_count"],
                                                                      adapt_rule=hypers['adapt_rule'],
-                                                                     use_in_recurrent=hypers['use_in_recurrent'])
+                                                                     use_in_recurrent=hypers['use_in_recurrent'],
+                                                                     weight_decay=hypers['weight_decay'])
 
             if best_final_loss is None or loss < best_final_loss:
                 best_final_loss = loss
