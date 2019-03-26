@@ -248,6 +248,17 @@ def evaluate(args, save_images=False):
             if args.use_gpu:
                 model.cuda()
 
+            # In case we want to adapat a subset of the parameters
+            params_to_adapt = None
+            if 'params_to_adapt' in hypers:
+                if not (hypers['params_to_adapt'] == 'all'):
+                    params_to_adapt = hypers['params_to_adapt']
+            for p, m in zip(model.parameters(), model.state_dict()):
+                if params_to_adapt is not None and m not in params_to_adapt:
+                    p.requires_grad = False
+                else:
+                    p.requires_grad = True
+
             if "rms_global_prior" not in hypers:
                 hypers["rms_global_prior"] = False
 

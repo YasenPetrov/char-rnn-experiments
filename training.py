@@ -308,10 +308,14 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
             loss.backward()
 
             for p, o in zip(model.parameters(), original_weigths):
+                if not p.requires_grad:
+                    # We might have frozen a subset of the parameters
+                    continue
                 if dynamic_rule == 'sgd':
                     # SGD with global prior update
                     p.data += - learning_rate * p.grad.data + decay_coef * (o - p.data)
                 elif dynamic_rule == 'rms':
+                    # RMS with (potentially an RMS) global prior update
                     decay_scalers = 1
                     if rms_global_prior:
                         decay_scalers = p.RMSNorm

@@ -113,7 +113,8 @@ def compute_gradient_rms(model, train_data, bptt, batch_size, use_gpu=False, max
         loss.backward()
 
         for param in model.parameters():
-            param.MS += param.grad.data ** 2
+            if param.requires_grad:
+                param.MS += param.grad.data ** 2
 
         n_batches += 1
 
