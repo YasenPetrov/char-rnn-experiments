@@ -8,6 +8,7 @@ import copy
 import numpy as np
 import torch
 from torch import nn
+from torch import optim
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -24,6 +25,7 @@ from utils.debugging import apply_hooks
 
 logger = get_logger(__name__)
 
+OPTIM_MAP = {'sgd': optim.SGD, 'adam': optim.Adam, 'adagrad': optim.Adagrad, 'adadelta':optim.Adadelta}
 
 def evaluate_lhuc_or_sparse(args):
     # Load best model from experiment
@@ -113,6 +115,11 @@ def evaluate_lhuc_or_sparse(args):
             if args.use_gpu:
                 model.cuda()
 
+            if 'optim' not in hypers:
+                optimizer = optim.SGD
+            else:
+                optimizer = OPTIM_MAP[hypers['optim']]
+
             start = time.time()
             chars_processed, loss, losses = evaluate_rnn_lhuc_sparse(model, data,
                                                                      loss_function=nn.modules.loss.CrossEntropyLoss(),
@@ -124,7 +131,8 @@ def evaluate_lhuc_or_sparse(args):
                                                                      num_chars_to_read=hypers["eval_char_count"],
                                                                      adapt_rule=hypers['adapt_rule'],
                                                                      use_in_recurrent=hypers['use_in_recurrent'],
-                                                                     weight_decay=hypers['weight_decay'])
+                                                                     weight_decay=hypers['weight_decay'],
+                                                                     optimizer_fn=optimizer)
 
             if best_final_loss is None or loss < best_final_loss:
                 best_final_loss = loss
