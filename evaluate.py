@@ -222,6 +222,12 @@ def evaluate(args, save_images=False):
         if "eval_char_count" not in spec or spec["eval_char_count"][0] < 0:
             spec["eval_char_count"] = [np.inf]
 
+        if 'remove_unknown' not in spec:
+            spec['remove_unknown'] = [False]
+
+        if 'record_logits' not in spec:
+            spec['record_logits'] = [False]
+
         # Make sure there is at most one static evaluation - hyperparams have no effect there
         if False in spec['dynamic']:
             spec['dynamic'] = [x for x in spec['dynamic'] if x]
@@ -232,7 +238,9 @@ def evaluate(args, save_images=False):
                                                            'stats_interval': spec['stats_interval'],
                                                            'learning_rate': [None],
                                                            'decay_coef': [None],
-                                                           'eval_char_count': spec['eval_char_count']})
+                                                           'eval_char_count': spec['eval_char_count'],
+                                                           'remove_unknown': spec['remove_unknown'],
+                                                           'record_logits': spec['record_logits']})
         else:
             hypers_list = dict_of_lists_to_list_of_dicts(spec)
 
@@ -270,9 +278,6 @@ def evaluate(args, save_images=False):
             if "dynamic_type" not in hypers:
                 hypers["dynamic_type"] = "sgd"
 
-            if 'remove_unknown' not in hypers:
-                hypers['remove_unknown'] = False
-
             # If we've already estimated RMS grads for this setting, reuse them
             if hypers['dynamic'] and hypers['dynamic_type'] == 'rms':
                 if hypers["rms_est_batch_size"] in rms_grad_stats and(hypers["num_timesteps"] in rms_grad_stats[hypers["rms_est_batch_size"]]):
@@ -292,19 +297,25 @@ def evaluate(args, save_images=False):
                         [p.RMS for p in model.parameters()]
 
             start = time.time()
-            chars_processed, loss, losses = evaluate_rnn(model, data,
-                                                        loss_function=nn.modules.loss.CrossEntropyLoss(),
-                                                        num_timesteps=hypers['num_timesteps'],
-                                                        use_gpu=args.use_gpu,
-                                                        dynamic=hypers['dynamic'],
-                                                        stats_interval=hypers['stats_interval'],
-                                                        record_stats=True,
-                                                        learning_rate=hypers['learning_rate'],
-                                                        decay_coef=hypers['decay_coef'],
-                                                        dynamic_rule=hypers["dynamic_type"],
-                                                        rms_global_prior=hypers["rms_global_prior"] or None,
-                                                        num_chars_to_read=hypers["eval_char_count"],
-                                                        remove_unknown_tokens=hypers['remove_unknown'])
+            eval_result = evaluate_rnn(model, data,
+                                        loss_function=nn.modules.loss.CrossEntropyLoss(),
+                                        num_timesteps=hypers['num_timesteps'],
+                                        use_gpu=args.use_gpu,
+                                        dynamic=hypers['dynamic'],
+                                        stats_interval=hypers['stats_interval'],
+                                        record_stats=True,
+                                        learning_rate=hypers['learning_rate'],
+                                        decay_coef=hypers['decay_coef'],
+                                        dynamic_rule=hypers["dynamic_type"],
+                                        rms_global_prior=hypers["rms_global_prior"] or None,
+                                        num_chars_to_read=hypers["eval_char_count"],
+                                        remove_unknown_tokens=hypers['remove_unknown'],
+                                        record_logits=hypers['record_logits'])
+
+            if hypers['record_logits']:
+                chars_processed, loss, losses, logits_history, target_history = eval_result
+            else:
+                chars_processed, loss, losses = eval_result
 
             if best_final_loss is None or loss < best_final_loss:
                 best_final_loss = loss
@@ -326,6 +337,10 @@ def evaluate(args, save_images=False):
             losses.to_csv(os.path.join(out_dir, 'stats.csv'), index=False)
             with open(os.path.join(out_dir, 'hyperparams.json'), 'w+') as fp:
                 json.dump(hypers, fp, indent=2)
+
+            if hypers['record_logits']:
+                np.save(os.path.join(out_dir, 'logits'), logits_history)
+                np.save(os.path.join(out_dir, 'targets'), target_history)
 
             if save_images:
                 # Plot losses and save image

@@ -221,7 +221,8 @@ def train_rnn(model: RNN_LM, data_train: Dataset, data_valid: Dataset, batch_siz
 def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=False, learning_rate=0,
                  record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False,
                  initial_hidden=None, logging_freq=int(1e4),
-                 dynamic_rule='sgd', rms_epsilon=2e-5, rms_global_prior=True, num_chars_to_read=np.inf):
+                 dynamic_rule='sgd', rms_epsilon=2e-5, rms_global_prior=True, num_chars_to_read=np.inf,
+                 record_logits=False):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -264,6 +265,10 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     if dynamic:
         original_weigths = [copy.deepcopy(p.data) for p in model.parameters()]
 
+    if record_logits:
+        logits_history = []
+        targets_history = []
+
     for inputs, targets in val_iterator:
         # Make variables volatile - we will not backpropagate here unless we're doing dynamic evaluation
         if use_gpu:
@@ -283,6 +288,7 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
         # Forward pass
         logits = model(inputs)
 
+
         # Compute the loss on this batch
         # We flatten the results and targets before calculating the loss(pyTorch requires 1D targets) - autograd takes
         # care of backpropagating through the view() operation
@@ -292,6 +298,10 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
         # timesteps to get the sum of losses for this batch
         tot_loss += loss.data[0] * inputs.shape[1]
         chars_processed += inputs.shape[1]
+
+        if record_logits:
+            logits_history.append(logits.contiguous().view(-1, logits.data.shape[-1]).data.cpu().numpy())
+            targets_history.append(targets.contiguous().view(-1).data.cpu().numpy())
 
         if record_stats:
             chars_since_last_stats += inputs.shape[1]
@@ -335,7 +345,13 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     # Restore hidden state
     model.hidden = old_hidden
 
+    if record_logits:
+        logits_history = np.concatenate(logits_history, axis=0)
+        targets_history = np.concatenate(targets_history, axis=0)
+
     if record_stats:
+        if record_logits:
+            return chars_processed, LOG_2E * (tot_loss / chars_processed), stats, logits_history, targets_history
         return chars_processed, LOG_2E * (tot_loss / chars_processed), stats
 
     return chars_processed, LOG_2E * (tot_loss / chars_processed)
