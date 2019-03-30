@@ -270,6 +270,9 @@ def evaluate(args, save_images=False):
             if "dynamic_type" not in hypers:
                 hypers["dynamic_type"] = "sgd"
 
+            if 'remove_unknown' not in hypers:
+                hypers['remove_unknown'] = False
+
             # If we've already estimated RMS grads for this setting, reuse them
             if hypers['dynamic'] and hypers['dynamic_type'] == 'rms':
                 if hypers["rms_est_batch_size"] in rms_grad_stats and(hypers["num_timesteps"] in rms_grad_stats[hypers["rms_est_batch_size"]]):
@@ -300,7 +303,8 @@ def evaluate(args, save_images=False):
                                                         decay_coef=hypers['decay_coef'],
                                                         dynamic_rule=hypers["dynamic_type"],
                                                         rms_global_prior=hypers["rms_global_prior"] or None,
-                                                        num_chars_to_read=hypers["eval_char_count"])
+                                                        num_chars_to_read=hypers["eval_char_count"],
+                                                        remove_unknown_tokens=hypers['remove_unknown'])
 
             if best_final_loss is None or loss < best_final_loss:
                 best_final_loss = loss
