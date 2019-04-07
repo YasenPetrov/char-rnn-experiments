@@ -236,6 +236,9 @@ def evaluate(args, save_images=False):
         if 'record_logits' not in spec:
             spec['record_logits'] = [False]
 
+        if 'entropy_penalty' not in spec:
+            spec['entropy_penalty'] = [0]
+
         # Make sure there is at most one static evaluation - hyperparams have no effect there
         if False in spec['dynamic']:
             spec['dynamic'] = [x for x in spec['dynamic'] if x]
@@ -248,7 +251,8 @@ def evaluate(args, save_images=False):
                                                            'decay_coef': [None],
                                                            'eval_char_count': spec['eval_char_count'],
                                                            'remove_unknown': spec['remove_unknown'],
-                                                           'record_logits': spec['record_logits']})
+                                                           'record_logits': spec['record_logits'],
+                                                           'entropy_penalty': [0]})
         else:
             hypers_list = dict_of_lists_to_list_of_dicts(spec)
 
@@ -318,7 +322,8 @@ def evaluate(args, save_images=False):
                                         rms_global_prior=hypers["rms_global_prior"] or None,
                                         num_chars_to_read=hypers["eval_char_count"],
                                         remove_unknown_tokens=hypers['remove_unknown'],
-                                        record_logits=hypers['record_logits'])
+                                        record_logits=hypers['record_logits'],
+                                        entropy_penalty=hypers['entropy_penalty'])
 
             if hypers['record_logits']:
                 chars_processed, loss, losses, logits_history, target_history = eval_result

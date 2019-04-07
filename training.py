@@ -222,7 +222,7 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
                  record_stats=False, stats_interval=None, decay_coef=0, remove_unknown_tokens=False,
                  initial_hidden=None, logging_freq=int(1e4),
                  dynamic_rule='sgd', rms_epsilon=2e-5, rms_global_prior=True, num_chars_to_read=np.inf,
-                 record_logits=False):
+                 record_logits=False, entropy_penalty=0):
     # In case this is done during training, we do not want to interfere with the model's hidden state - we save that now
     # and recover it at the end of evaluation
     old_hidden = model.hidden
@@ -268,6 +268,9 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
     if record_logits:
         logits_history = []
         targets_history = []
+
+    if entropy_penalty is not None and not entropy_penalty == 0:
+        sm = nn.Softmax(dim=0)
 
     for inputs, targets in val_iterator:
         # Make variables volatile - we will not backpropagate here unless we're doing dynamic evaluation
@@ -316,6 +319,12 @@ def evaluate_rnn(model, data, loss_function, num_timesteps, use_gpu, dynamic=Fal
                 chars_since_last_stats = 0
 
         if dynamic:
+
+            if entropy_penalty is not None and not entropy_penalty == 0:
+                preds = sm(logits.view(-1, logits.shape[-1]))
+                # Add entropy penalty to loss
+                loss += -torch.mean(torch.sum(preds * torch.log(preds), dim=0)) * entropy_penalty
+
             # Backward pass - compute gradients, propagate gradient information back through the network
             loss.backward()
 
